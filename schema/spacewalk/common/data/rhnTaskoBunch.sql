@@ -1,5 +1,5 @@
 --
--- Copyright (c) 2010--2012 Red Hat, Inc.
+-- Copyright (c) 2010--2015 Red Hat, Inc.
 --
 -- This software is licensed to you under the GNU General Public License,
 -- version 2 (GPLv2). There is NO WARRANTY for this software, express or
@@ -62,9 +62,6 @@ INSERT INTO rhnTaskoBunch (id, name, description, org_bunch)
 
 INSERT INTO rhnTaskoBunch (id, name, description, org_bunch)
              VALUES (sequence_nextval('rhn_tasko_bunch_id_seq'), 'channel-repodata-bunch', 'Generates channel repodata', null);
-
-INSERT INTO rhnTaskoBunch (id, name, description, org_bunch)
-             VALUES (sequence_nextval('rhn_tasko_bunch_id_seq'), 'satcert-check-bunch', 'Checks whether satellite certificate has not expired', null);
 
 INSERT INTO rhnTaskoBunch (id, name, description, org_bunch)
              VALUES (sequence_nextval('rhn_tasko_bunch_id_seq'), 'cleanup-data-bunch', 'Cleans up orphaned and outdated data', null);

@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2013--2014 Red Hat, Inc.
+ * Copyright (c) 2013--2015 Red Hat, Inc.
  *
  * This software is licensed to you under the GNU General Public License,
  * version 2 (GPLv2). There is NO WARRANTY for this software, express or
@@ -82,7 +82,6 @@ public class IconTag extends TagSupport {
         icons.put("header-info", "fa fa-info-circle");
         icons.put("header-kickstart", "fa fa-rocket");
         icons.put("header-list", "fa fa-list");
-        icons.put("header-monitoring", "fa fa-1-5x spacewalk-icon-monitoring-status");
         icons.put("header-multiorg-big", "fa fa-sitemap fa-3x");
         icons.put("header-note", "fa spacewalk-icon-note-pin");
         icons.put("header-organisation", "fa fa-group");
@@ -127,14 +126,6 @@ public class IconTag extends TagSupport {
         icons.put("item-ssm-del", "fa fa-minus-circle");
         icons.put("item-upload", "fa fa-upload");
         icons.put("item-order", "fa fa-sort");
-        icons.put("monitoring-crit",
-                  "fa fa-1-5x spacewalk-icon-monitoring-down text-danger");
-        icons.put("monitoring-ok", "fa fa-1-5x spacewalk-icon-monitoring-ok text-success");
-        icons.put("monitoring-pending", "fa fa-1-5x spacewalk-icon-monitoring-pending");
-        icons.put("monitoring-status", "fa spacewalk-icon-monitoring-status");
-        icons.put("monitoring-unknown", "fa fa-1-5x spacewalk-icon-monitoring-unknown");
-        icons.put("monitoring-warn",
-                  "fa fa-1-5x spacewalk-icon-monitoring-warning text-warning");
         icons.put("nav-bullet", "fa fa-caret-right");
         icons.put("nav-page-first", "fa fa-angle-double-left");
         icons.put("nav-page-last", "fa fa-angle-double-right");
@@ -157,6 +148,7 @@ public class IconTag extends TagSupport {
         icons.put("system-warn", "fa fa-exclamation-triangle fa-1-5x text-warning");
         icons.put("repo-sync", "fa fa-refresh");
         icons.put("repo-schedule-sync", "fa fa-calendar");
+        icons.put("scap-nochange", "fa fa-dot-circle-o fa-1-5x text-info");
     }
 
     /**

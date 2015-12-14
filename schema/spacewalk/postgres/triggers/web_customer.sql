@@ -1,7 +1,7 @@
--- oracle equivalent source sha1 7d4cf775fd438438e65e6eb9e8be419f441fdff8
+-- oracle equivalent source sha1 8a253b5b982abad448bce7b79a07518758b81c97
 
 --
--- Copyright (c) 2008--2012 Red Hat, Inc.
+-- Copyright (c) 2008--2015 Red Hat, Inc.
 --
 -- This software is licensed to you under the GNU General Public License,
 -- version 2 (GPLv2). There is NO WARRANTY for this software, express or
@@ -43,6 +43,7 @@ as
 $$
 begin
 	insert into rhnOrgConfiguration (org_id) values (new.id);
+	insert into rhnOrgAdminManagement (org_id) values (new.id);
 
         return new;
 end;

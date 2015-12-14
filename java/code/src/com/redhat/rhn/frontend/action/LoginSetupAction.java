@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2009--2014 Red Hat, Inc.
+ * Copyright (c) 2009--2015 Red Hat, Inc.
  *
  * This software is licensed to you under the GNU General Public License,
  * version 2 (GPLv2). There is NO WARRANTY for this software, express or
@@ -14,16 +14,11 @@
  */
 package com.redhat.rhn.frontend.action;
 
-import com.redhat.rhn.common.db.datasource.DataResult;
-import com.redhat.rhn.common.db.datasource.ModeFactory;
-import com.redhat.rhn.common.db.datasource.SelectMode;
 import com.redhat.rhn.domain.user.User;
 import com.redhat.rhn.frontend.struts.RequestContext;
 import com.redhat.rhn.frontend.struts.RhnAction;
 import com.redhat.rhn.frontend.struts.RhnHelper;
 import com.redhat.rhn.manager.acl.AclManager;
-import com.redhat.rhn.manager.satellite.CertificateManager;
-import com.redhat.rhn.manager.satellite.SystemCommandExecutor;
 import com.redhat.rhn.manager.user.UserManager;
 
 import org.apache.log4j.Logger;
@@ -32,56 +27,26 @@ import org.apache.struts.action.ActionForm;
 import org.apache.struts.action.ActionForward;
 import org.apache.struts.action.ActionMapping;
 import org.apache.struts.action.ActionMessages;
-import java.util.HashMap;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 /**
  * LoginSetupAction
- * @version $Rev$
  */
 public class LoginSetupAction extends RhnAction {
 
     private static Logger log = Logger.getLogger(LoginSetupAction.class);
-    public static final String HAS_EXPIRED = "hasExpired";
 
     /** {@inheritDoc} */
     public ActionForward execute(ActionMapping mapping,
         ActionForm form, HttpServletRequest request,
         HttpServletResponse response) {
 
-        String rpmSchemaVersion = getRpmSchemaVersion("satellite-schema");
-        if (rpmSchemaVersion == null) {
-            rpmSchemaVersion = getRpmSchemaVersion("spacewalk-schema");
-        }
-
-        SelectMode m = ModeFactory.getMode("General_queries", "installed_schema_version");
-        DataResult<HashMap> dr = m.execute();
-        String installedSchemaVersion = null;
-        if (dr.size() > 0) {
-            installedSchemaVersion = (String) dr.get(0).get("version");
-        }
         request.setAttribute("schemaUpgradeRequired",
                 LoginHelper.isSchemaUpgradeRequired().toString());
 
-        CertificateManager man = CertificateManager.getInstance();
-        if (man.isSatelliteCertInRestrictedPeriod()) {
-            createErrorMessageWithMultipleArgs(request, "satellite.expired.restricted",
-                    man.getDayProgressInRestrictedPeriod());
-        }
-        else if (man.isSatelliteCertExpired()) {
-            addMessage(request, "satellite.expired");
-            request.setAttribute(HAS_EXPIRED, Boolean.TRUE);
-            return mapping.findForward(RhnHelper.DEFAULT_FORWARD);
-        }
-        else if (man.isSatelliteCertInGracePeriod()) {
-            long daysUntilExpiration = man.getDaysLeftBeforeCertExpiration();
-            createSuccessMessage(request,
-                "satellite.graceperiod",
-                String.valueOf(daysUntilExpiration));
-        }
-        else if (!UserManager.satelliteHasUsers()) {
+        if (!UserManager.satelliteHasUsers()) {
             return mapping.findForward("needuser");
         }
 
@@ -109,16 +74,5 @@ public class LoginSetupAction extends RhnAction {
         ctx.copyParamToAttributes("request_method");
 
         return mapping.findForward(RhnHelper.DEFAULT_FORWARD);
-    }
-
-    private String getRpmSchemaVersion(String schemaName) {
-        String[] rpmCommand = new String[4];
-        rpmCommand[0] = "rpm";
-        rpmCommand[1] = "-q";
-        rpmCommand[2] = "--qf=%{VERSION}-%{RELEASE}";
-        rpmCommand[3] = schemaName;
-        SystemCommandExecutor ce = new SystemCommandExecutor();
-        return ce.execute(rpmCommand) == 0 ?
-            ce.getLastCommandOutput().replace("\n", "") : null;
     }
 }

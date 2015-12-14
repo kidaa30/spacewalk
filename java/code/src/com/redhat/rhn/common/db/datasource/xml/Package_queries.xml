@@ -1381,7 +1381,6 @@ ORDER BY CHANNEL_NAME DESC, EVR DESC
      DBD Oracle can't handle an Oracle object in the return results of a
      query.
 -->
-<!-- AC.current_members > 0 is used here. -->
 SELECT NVREA, PACKAGE_ID, CHANNEL_NAME, CHANNEL_ID
   FROM (SELECT DISTINCT
                PE.evr AS EVR,
@@ -1401,7 +1400,6 @@ SELECT NVREA, PACKAGE_ID, CHANNEL_NAME, CHANNEL_ID
            AND PN.id = P.name_id
            AND PE.id = P.evr_id
            AND AC.channel_id = CP.channel_id
-           AND AC.current_members > 0
            AND P.id = CP.package_id
            AND C.id = AC.channel_id
            AND PA.id = P.package_arch_id
@@ -1515,31 +1513,6 @@ SELECT distinct P.id AS ID,
            rhnPackageName PN on P.name_id = PN.id inner join
            rhnPackageEVR PE on P.evr_id = PE.id
  WHERE  P.org_id = :org_id and
-                not exists (
-                        select P.id
-            from rhnChannelPackage CP2 inner join
-             rhnPackage P2 on CP2.package_id = P2.id
-                        where CP2.channel_id = :cid and
-                                P2.name_id = PN.id and
-                                P2.evr_id = PE.id and
-                                P2.package_arch_id = PA.id
-                )
-  </query>
-    <elaborator name="package_details" />
-</mode>
-
-
-<mode name="orphan_packages_for_channel" class="com.redhat.rhn.frontend.dto.PackageOverview">
-  <query params="cid, org_id">
-SELECT distinct P.id AS ID,
-       PN.name || '-' || evr_t_as_vre_simple(PE.evr) || '.' || PA.label AS NVREA
-  FROM rhnPackage P inner join
-           rhnPackageArch PA on P.package_arch_id = PA.id inner join
-           rhnPackageName PN on P.name_id = PN.id inner join
-           rhnPackageEVR PE on P.evr_id = PE.id left join
-           rhnChannelPackage CP on P.id = CP.package_id
- WHERE  (P.org_id = :org_id) and
-                CP.channel_id is null and
                 not exists (
                         select P.id
             from rhnChannelPackage CP2 inner join

@@ -1,5 +1,5 @@
 Name:		spacewalk-jpp-workaround
-Version:	2.3.2
+Version:	2.3.5
 Release:	1%{?dist}
 Summary:	Workaround package to fulfill jpackage broken dependencies
 
@@ -58,6 +58,20 @@ Provides:   jpackage-utils
 Obsoletes:  jpackage-utils >= 5.0.0
 %endif
 
+%if 0%{?fedora} >= 22
+Requires:   apache-commons-fileupload
+Provides:   jakarta-commons-fileupload = 1:1.3.0
+Obsoletes:  jakarta-commons-fileupload < 1:1.3.0
+
+Requires:   apache-commons-collections
+Provides:   jakarta-commons-collections = 3.2.0
+Obsoletes:  jakarta-commons-collections < 3.2.0
+%endif
+
+%if 0%{?fedora} >= 23
+Provides:   mvn(org.apache.taglibs:taglibs-standard-jstlel)
+%endif
+
 %description
 This package fulfills jpackage missing msv-msv dependency.
 
@@ -87,6 +101,15 @@ rm -rf $RPM_BUILD_ROOT
 
 
 %changelog
+* Fri Dec 04 2015 Tomas Kasparek <tkasparek@redhat.com> 2.3.5-1
+- provide mvn(org.apache.taglibs:taglibs-standard-jstlel) on F23
+
+* Fri May 29 2015 Tomas Kasparek <tkasparek@redhat.com> 2.3.4-1
+- add epoch for jakarta-commons-fileupload
+
+* Thu May 28 2015 Tomas Kasparek <tkasparek@redhat.com> 2.3.3-1
+- update spacewalk-jpp-workaround for Fedora 22
+
 * Thu Sep 11 2014 Michael Mraka <michael.mraka@redhat.com> 2.3.2-1
 - replace jakarta-commons-validator on RHEL7
 

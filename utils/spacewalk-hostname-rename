@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# Copyright (c) 2010--2014 Red Hat, Inc.
+# Copyright (c) 2010--2015 Red Hat, Inc.
 #
 # This software is licensed to you under the GNU General Public License,
 # version 2 (GPLv2). There is NO WARRANTY for this software, express or
@@ -28,6 +28,7 @@ BOOTSTRAP_SH=/var/www/html/pub/bootstrap/bootstrap.sh
 BOOTSTRAP_CCO=/var/www/html/pub/bootstrap/client-config-overrides.txt
 SAT_LOCAL_RULES_CONF=/var/lib/rhn/rhn-satellite-prep/satellite-local-rules.conf
 BACKUP_EXT=.rnmbck
+CA_CERT_TRUST_DIR=/etc/pki/ca-trust/source/anchors
 
 DB_BACKEND="$(spacewalk-cfg-get db_backend)"
 if [ "$DB_BACKEND" = "oracle" ]; then
@@ -280,8 +281,25 @@ function re-generate_server_ssl_certificate {
             SSL_CA_PASSWORD=${REPLY}
         fi
 
-        echo " Generating SSL certificate:" | tee -a $LOG
+        echo " Generating SSL certificates:" | tee -a $LOG
         # just log the SSL info ...
+        echo "rhn-ssl-tool --gen-ca --force \
+            --dir="$SSL_BUILD_DIR" \
+            --set-country="$SSL_COUNTRY" \
+            --set-state="$SSL_STATE" \
+            --set-org="$SSL_ORG" \
+            --set-org-unit="$SSL_ORGUNIT" \
+            --set-common-name="${HOSTNAME}" \
+        " >> $LOG
+        rhn-ssl-tool --gen-ca --force \
+            --dir="$SSL_BUILD_DIR" \
+            --set-country="$SSL_COUNTRY" \
+            --set-state="$SSL_STATE" \
+            --set-org="$SSL_ORG" \
+            --set-org-unit="$SSL_ORGUNIT" \
+            --set-common-name="${HOSTNAME}" \
+            --password="$SSL_CA_PASSWORD" \
+            2>>$LOG
         echo "rhn-ssl-tool --gen-server \
             --dir="$SSL_BUILD_DIR" \
             --set-country="$SSL_COUNTRY" \
@@ -320,7 +338,7 @@ function re-generate_server_ssl_certificate {
         print_status $?
 
         echo -n "Making new SSL certificate publicly available ... " | tee -a $LOG
-        /usr/bin/rhn-deploy-ca-cert.pl --source-dir=$SSL_BUILD_DIR --target-dir=$HTTP_PUB_DIR
+        /usr/bin/rhn-deploy-ca-cert.pl --source-dir=$SSL_BUILD_DIR --target-dir=$HTTP_PUB_DIR --trust-dir=$CA_CERT_TRUST_DIR
         print_status $?
 
         # copy jabberd certificate, too

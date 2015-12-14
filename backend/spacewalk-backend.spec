@@ -15,7 +15,7 @@ Name: spacewalk-backend
 Summary: Common programs needed to be installed on the Spacewalk servers/proxies
 Group: Applications/Internet
 License: GPLv2
-Version: 2.4.4
+Version: 2.5.8
 Release: 1%{?dist}
 URL:       https://fedorahosted.org/spacewalk
 Source0: https://fedorahosted.org/releases/s/p/spacewalk/%{name}-%{version}.tar.gz
@@ -258,7 +258,7 @@ Requires: pyliblzma
 %endif
 Requires: mod_ssl
 Requires: %{name}-xml-export-libs
-Requires: cobbler >= 2.0.0
+Requires: cobbler20
 Requires: rhnlib  >= 2.5.57
 Obsoletes: rhns-satellite-tools < 5.3.0
 Obsoletes: spacewalk-backend-satellite-tools <= 0.2.7
@@ -573,7 +573,6 @@ rm -f %{rhnconf}/rhnSecret.py*
 %attr(644,root,apache) %{rhnconfigdefaults}/rhn_server_satellite.conf
 %config(noreplace) %{_sysconfdir}/logrotate.d/spacewalk-backend-tools
 %attr(755,root,root) %{_bindir}/rhn-charsets
-%attr(755,root,root) %{_bindir}/rhn-satellite-activate
 %attr(755,root,root) %{_bindir}/rhn-schema-version
 %attr(755,root,root) %{_bindir}/rhn-ssl-dbstore
 %attr(755,root,root) %{_bindir}/satellite-sync
@@ -586,7 +585,6 @@ rm -f %{rhnconf}/rhnSecret.py*
 %attr(755,root,root) %{_bindir}/satpasswd
 %attr(755,root,root) %{_bindir}/satwho
 %attr(755,root,root) %{_bindir}/spacewalk-remove-channel*
-%attr(755,root,root) %{_bindir}/rhn-entitlement-report
 %attr(755,root,root) %{_bindir}/spacewalk-update-signatures
 %attr(755,root,root) %{_bindir}/spacewalk-data-fsck
 %attr(755,root,root) %{_bindir}/spacewalk-fips-tool
@@ -599,7 +597,6 @@ rm -f %{rhnconf}/rhnSecret.py*
 %{pythonrhnroot}/satellite_tools/satComputePkgHeaders.py*
 %{pythonrhnroot}/satellite_tools/syncCache.py*
 %{pythonrhnroot}/satellite_tools/sync_handlers.py*
-%{pythonrhnroot}/satellite_tools/rhn_satellite_activate.py*
 %{pythonrhnroot}/satellite_tools/rhn_ssl_dbstore.py*
 %{pythonrhnroot}/satellite_tools/xmlWireSource.py*
 %{pythonrhnroot}/satellite_tools/updatePackages.py*
@@ -621,7 +618,6 @@ rm -f %{rhnconf}/rhnSecret.py*
 %config %attr(644,root,apache) %{rhnconfigdefaults}/rhn_server_iss.conf
 %{_mandir}/man8/rhn-satellite-exporter.8*
 %{_mandir}/man8/rhn-charsets.8*
-%{_mandir}/man8/rhn-satellite-activate.8*
 %{_mandir}/man8/rhn-schema-version.8*
 %{_mandir}/man8/rhn-ssl-dbstore.8*
 %{_mandir}/man8/rhn-db-stats.8*
@@ -636,7 +632,6 @@ rm -f %{rhnconf}/rhnSecret.py*
 %{_mandir}/man8/spacewalk-data-fsck.8*
 %{_mandir}/man8/spacewalk-update-signatures.8*
 %{_mandir}/man8/update-packages.8*
-%{_mandir}/man8/rhn-entitlement-report.8*
 
 %files xml-export-libs
 %doc LICENSE
@@ -655,6 +650,162 @@ rm -f %{rhnconf}/rhnSecret.py*
 %{pythonrhnroot}/satellite_tools/exporter/xmlWriter.py*
 
 %changelog
+* Thu Dec 10 2015 Jan Dobes 2.5.8-1
+- making synced channels in null org visible to all orgs
+
+* Mon Dec 07 2015 Jan Dobes 2.5.7-1
+- fixing append to None when no org is found
+
+* Fri Dec 04 2015 Jan Dobes 2.5.6-1
+- when installing insert default SSL crypto key with null org
+
+* Mon Nov 30 2015 Tomas Lestach <tlestach@redhat.com> 2.5.5-1
+- fix typo: lastest -> latest
+
+* Tue Nov 24 2015 Jan Dobes 2.5.4-1
+- ignore all not any longer supported entitlements
+- backend: remove repoll parameter from
+  rhn_entitlements.remove_server_entitlement()
+- backend: do not use rhn_entitlements.repoll_virt_guest_entitlements() anymore
+- backend: errno 20220 (Server Group Membership exceeded) is not thrown anymore
+- backend: remove use of rhn_entitlements.activate_system_entitlement()
+- satCert, satsync: checkstyle fixes
+- satsync.py: fix merge error
+- backend: remove max_members from unit tests
+- remove max_member update from rhnServerGroup
+- drop rhnFault 91
+- ISS: export 10 system entitlements and import none
+- drop rhn-entitlement-report
+- remove comments
+- remove unused function entitlement_grants_service()
+- It should always work to add with enterprise_entitled
+- Removed unused exception
+- backend: dead code removal
+- rhn-satellite-activate: manual references removed
+- rhn-satellite-activate: dropped
+- satellite-sync: don't sync the certificate
+- server_class.py: remove dead code
+- rhnHandler: don't check for certificate expiry
+- satCerts.py: remove comment reference to dropped file
+- rhn_satellite_activate: remove unused validateSatCert function
+- rhn_satellite_activate: don't check certificate validity
+- rhn_satellite_activate: outdated comment removed
+- import: don't import rhnVirtSubLevel
+- import: don't import from rhnSGTypeVirtSubLevel
+- import: don't import table rhnChannelFamilyVirtSubLevel
+- export refactoring: remove unused parameters/fields
+- export refactoring: remove unused query
+- export: don't export rhnChannelFamilyVirtSubLevel
+- export refactoring: unused attributes removed
+- import refactoring: unused attribute removed
+- backend: remove virtualization host platform entitlement references
+- backend: remove references to nonlinux entitlements
+- backend: remove comments that are not relevant anymore
+- backend: remove references to the update entitlement
+- rhn-entitlement-report: don't filter update entitlements
+- python backend unit tests: remove references to provisioning_entitled
+- registration.py: remove references to provisioning_entitled in documentation
+- backend: remove references to provisioning_entitled
+- backend: commented code removed
+- backend: unused reg_num parameter removed from documentation
+- Change error message for NoBaseChannel Exception
+- Remove monitoring from cert tools
+- Remove traces of monitoring from registration.py doc
+- backend: do not set max_members of rhnChannelFamily
+- backend: do not set values for max_members and current_members
+- backend: remove unused ChannelFamilyPermissions class
+- backend: remove special handling for SubscriptionCountExceeded
+- backend: remove unused imports
+- entitlement-report: remove channel entitlement views
+- backend: remove unused ChannelFamilyPermissionsImport() and
+  processChannelFamilyPermissions
+- backend: remove populate_channel_family_permissions and
+  purge_extra_channel_families from sync_handler
+- backend: remove local handling of channel family members from satsync
+- backend: remove channel subscription checks from rhn-satellite-activate
+- backend: update rhn_channel.subscribe_server signature
+- backend: remove usage of update_family_counts
+- backend: remove available_subscriptions from channel object
+- backend: remove family count handling from server_kickstart
+- backend: remove family count handling from server_token
+
+* Sun Oct 18 2015 Aron Parsons <aronparsons@gmail.com> 2.5.3-1
+- don't print python object details in reposync.py
+
+* Mon Oct 12 2015 Jiri Dostal <jdostal@redhat.com> 2.5.2-1
+- [RFE] spacewalk-repo-sync: support multiple '-c channel' as in satellite-sync
+
+* Wed Oct 07 2015 Aron Parsons <aronparsons@gmail.com> 2.5.1-1
+- recognize RDO OpenStack instances as virtual systems
+- Bumping package versions for 2.5.
+
+* Wed Sep 23 2015 Jan Dobes 2.4.23-1
+- Pulling updated *.po translations from Zanata.
+
+* Mon Sep 21 2015 Jan Dobes 2.4.22-1
+- 1250351 - make sure ks tree label is valid
+
+* Fri Sep 18 2015 Jan Dobes 2.4.21-1
+- Realigning arguments to process_batch to conform to indentation standards -
+  see https://www.python.org/dev/peps/pep-0008/#indentation
+- Fixed spelling of _proces_batch -> _process_batch.
+
+* Thu Sep 10 2015 Tomas Lestach <tlestach@redhat.com> 2.4.20-1
+- call xz to decompress comps file directly, if pyliblzma not available
+
+* Tue Sep 08 2015 Jan Dobes 2.4.19-1
+- 1201007 - handle existing file
+- optimize experssion
+
+* Mon Sep 07 2015 Tomas Lestach <tlestach@redhat.com> 2.4.18-1
+- 1260735 - set domain name for sender address in rhn-satellite-exporter
+
+* Fri Aug 28 2015 Jan Dobes 2.4.17-1
+- Fixes orabug 20623622 spacewalk-repo-sync error: maximum recursion depth
+  exceeded error when syncing to ULN via a proxy server
+
+* Tue Aug 25 2015 Grant Gainey 2.4.16-1
+- 1256918 - Handle package_group == None on push
+
+* Tue Aug 18 2015 Jiri Dostal <jdostal@redhat.com> 2.4.15-1
+- 1097634 - reposync fixed pylint warnings
+
+* Fri Aug 14 2015 Jiri Dostal <jdostal@redhat.com> 2.4.14-1
+- RFE 1097634 - fixed package sorting             - removed package
+  disassociation
+
+* Fri Aug 07 2015 Jan Dobes 2.4.13-1
+- use hostname instead of localhost for https connections
+
+* Tue Aug 04 2015 Jiri Dostal <jdostal@redhat.com> 2.4.12-1
+-  - patch for reposync (pylint)
+
+* Thu Jul 30 2015 Jiri Dostal <jdostal@redhat.com> 2.4.11-1
+- [RFE] - --latest feature for spacewalk-repo-sync
+
+* Fri Jul 24 2015 Tomas Kasparek <tkasparek@redhat.com> 2.4.10-1
+- require cobbler20 - Spacewalk is not working with upstream cobbler anyway
+- remove un-intentional changes
+- 1181152 - XSS when altering user details and going somewhere where you are
+  choosing user         - Escaped tags in real names
+
+* Tue Jul 14 2015 Tomas Kasparek <tkasparek@redhat.com> 2.4.9-1
+- remove Except KeyboardInterrupt from imports
+- remove Except KeyboardInterrupt from imports
+- remove un-necessary try-except construct
+
+* Fri Jun 26 2015 Jan Dobes 2.4.8-1
+- 1235827 - there is no such restriction for user names
+
+* Thu Jun 11 2015 Tomas Kasparek <tkasparek@redhat.com> 2.4.7-1
+- Recommends is not ignored on older systems
+
+* Wed Jun 10 2015 Tomas Kasparek <tkasparek@redhat.com> 2.4.6-1
+- add weak dependency on cobbler20
+
+* Wed May 27 2015 Tomas Kasparek <tkasparek@redhat.com> 2.4.5-1
+- fix pylint warnings on Fedora 22
+
 * Thu May 21 2015 Matej Kollar <mkollar@redhat.com> 2.4.4-1
 - 1175516 - Typos in rhn-entitlement-report output
 

@@ -4,23 +4,27 @@ Group: Applications/System
 License: GPLv2
 Source0: https://fedorahosted.org/releases/s/p/spacewalk/%{name}-%{version}.tar.gz
 URL:     https://fedorahosted.org/spacewalk
-Version: 5.4.27
+Version: 5.4.28
 Release: 1%{?dist}
 BuildRoot: %(mktemp -ud %{_tmppath}/%{name}-%{version}-%{release}-XXXXXX)
 BuildArch: noarch
 BuildRequires: python-devel
 Requires: rhnlib
 
-%if 0%{?rhel} >= 5 || 0%{?fedora}
+%if 0%{?rhel} >= 5 || 0%{?fedora} < 22
 Requires: yum-rhn-plugin
 %else
 # rpm do not support elif
+%if 0%{?fedora} >= 22
+Requires: dnf-plugin-spacewalk
+%else
 %if 0%{?suse_version}
 Requires: zypp-plugin-spacewalk
 # provide rhn directories for filelist check
 BuildRequires: rhn-client-tools
 %else
 Requires: up2date
+%endif
 %endif
 %endif
 
@@ -52,6 +56,9 @@ rm -rf $RPM_BUILD_ROOT
 %{_mandir}/man8/rhn-custom-info.*
 
 %changelog
+* Mon Jun 08 2015 Michael Mraka <michael.mraka@redhat.com> 5.4.28-1
+- switch to dnf on Fedora 22
+
 * Wed Jan 14 2015 Matej Kollar <mkollar@redhat.com> 5.4.27-1
 - Getting rid of Tabs and trailing spaces in LICENSE, COPYING, and README files
 

@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2008--2013 Red Hat, Inc.
+# Copyright (c) 2008--2015 Red Hat, Inc.
 #
 # This software is licensed to you under the GNU General Public License,
 # version 2 (GPLv2). There is NO WARRANTY for this software, express or
@@ -19,7 +19,7 @@
 SUBDIR	=   certs
 FILES	=   __init__ rhn_ssl_tool sslToolCli sslToolConfig sslToolLib \
             timeLib rhn_bootstrap rhn_bootstrap_strings client_config_update
-INSTALL_FILES   = gen-rpm.sh sign.sh
+INSTALL_FILES   = gen-rpm.sh sign.sh update-ca-cert-trust.sh
 
 # check if we can build man pages
 DOCBOOK = $(wildcard /usr/bin/docbook2man)

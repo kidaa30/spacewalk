@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2013--2014 Red Hat, Inc.
+ * Copyright (c) 2013--2015 Red Hat, Inc.
  *
  * This software is licensed to you under the GNU General Public License,
  * version 2 (GPLv2). There is NO WARRANTY for this software, express or
@@ -16,6 +16,7 @@
 package com.redhat.rhn.domain.org;
 
 import com.redhat.rhn.domain.BaseDomainHelper;
+
 import org.apache.log4j.Logger;
 
 /**
@@ -28,6 +29,7 @@ public class OrgConfig extends BaseDomainHelper {
 
     private Long orgId;
     private boolean stagingContentEnabled;
+    private boolean errataEmailsEnabled;
     private boolean crashReportingEnabled;
     private boolean crashfileUploadEnabled;
     private Long crashFileSizelimit;
@@ -64,6 +66,20 @@ public class OrgConfig extends BaseDomainHelper {
      */
     public void setStagingContentEnabled(boolean stageContentEnabledIn) {
         stagingContentEnabled = stageContentEnabledIn;
+    }
+
+    /**
+     * @return Returns the errataEmailsEnabled.
+     */
+    public boolean isErrataEmailsEnabled() {
+        return errataEmailsEnabled;
+    }
+
+    /**
+     * @param errataEmailsEnabledIn The errataEmailsEnabled to set.
+     */
+    public void setErrataEmailsEnabled(boolean errataEmailsEnabledIn) {
+        this.errataEmailsEnabled = errataEmailsEnabledIn;
     }
 
     /**

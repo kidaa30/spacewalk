@@ -21,6 +21,7 @@ import com.redhat.rhn.domain.common.ChecksumType;
 import com.redhat.rhn.domain.user.User;
 import com.redhat.rhn.frontend.xmlrpc.InvalidChannelLabelException;
 import com.redhat.rhn.frontend.xmlrpc.InvalidChannelNameException;
+import com.redhat.rhn.frontend.xmlrpc.InvalidChecksumLabelException;
 import com.redhat.rhn.frontend.xmlrpc.InvalidGPGKeyException;
 import com.redhat.rhn.frontend.xmlrpc.InvalidGPGUrlException;
 import com.redhat.rhn.frontend.xmlrpc.InvalidParentChannelException;
@@ -36,7 +37,6 @@ import java.util.regex.Pattern;
 
 /**
  * CreateChannelCommand - command to create a new channel.
- * @version $Rev$
  */
 public class CreateChannelCommand {
 
@@ -229,7 +229,7 @@ public class CreateChannelCommand {
         globallySubscribable = globallySubscribableIn;
     }
 
-    protected ChannelArch validateChannel() {
+    protected void validateChannel(ChannelArch ca, ChecksumType ct) {
         verifyRequiredParameters();
         verifyChannelName(name);
         verifyChannelLabel(label);
@@ -247,12 +247,13 @@ public class CreateChannelCommand {
                 "edit.channel.invalidchannellabel.labelinuse", label);
         }
 
-        ChannelArch ca = ChannelFactory.findArchByLabel(archLabel);
         if (ca == null) {
             throw new IllegalArgumentException("Invalid architecture label");
         }
 
-        return ca;
+        if (ct == null) {
+            throw new InvalidChecksumLabelException();
+        }
     }
 
     /**
@@ -267,8 +268,9 @@ public class CreateChannelCommand {
     public Channel create() throws InvalidChannelLabelException,
             InvalidChannelNameException, InvalidParentChannelException {
 
-        ChannelArch ca = validateChannel();
+        ChannelArch ca = ChannelFactory.findArchByLabel(archLabel);
         ChecksumType ct = ChannelFactory.findChecksumTypeByLabel(checksum);
+        validateChannel(ca, ct);
 
         Channel c = ChannelFactory.createChannel();
         c.setLabel(label);

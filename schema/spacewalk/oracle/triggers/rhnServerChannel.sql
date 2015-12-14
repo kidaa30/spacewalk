@@ -1,5 +1,5 @@
 --
--- Copyright (c) 2008--2012 Red Hat, Inc.
+-- Copyright (c) 2008--2015 Red Hat, Inc.
 --
 -- This software is licensed to you under the GNU General Public License,
 -- version 2 (GPLv2). There is NO WARRANTY for this software, express or
@@ -25,14 +25,3 @@ begin
 end;
 /
 show errors
-
---
--- Revision 1.2  2002/05/10 22:00:48  pjones
--- add rhnFAQClass, and make it a dep for rhnFAQ
--- add grants where appropriate
--- add cvs id/log where it's been missed
--- split data out where appropriate
--- add excludes where appropriate
--- make sure it still builds (at least as sat).
--- (really this time)
---

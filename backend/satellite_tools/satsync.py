@@ -34,7 +34,7 @@ translation = gettext.translation('spacewalk-backend-server', fallback=True)
 _ = translation.ugettext
 
 # __rhn imports__
-from spacewalk.common import rhnMail, rhnLib, rhnFlags
+from spacewalk.common import rhnMail, rhnLib
 from spacewalk.common.rhnLog import initLOG
 from spacewalk.common.rhnConfig import CFG, initCFG, PRODUCT_NAME
 from spacewalk.common.rhnTB import exitWithTraceback
@@ -44,7 +44,6 @@ from spacewalk.common.checksum import getFileChecksum
 
 from spacewalk.server import rhnSQL
 from spacewalk.server.rhnSQL import SQLError, SQLSchemaError, SQLConnectError
-from spacewalk.server.rhnServer import satellite_cert
 from spacewalk.server.rhnLib import get_package_path
 from spacewalk.common import fileutils
 
@@ -77,7 +76,6 @@ import sync_handlers
 import constants
 
 _DEFAULT_SYSTEMID_PATH = '/etc/sysconfig/rhn/systemid'
-_DEFAULT_RHN_ENTITLEMENT_CERT_BACKUP = '/etc/sysconfig/rhn/rhn-entitlement-cert.xml'
 DEFAULT_ORG = 1
 
 # the option object is used everywhere in this module... make it a
@@ -297,9 +295,6 @@ class Runner:
 
     def _step_channel_families(self):
         self.syncer.processChannelFamilies()
-        # Sync the certificate (and update channel family permissions)
-        if not CFG.ISS_PARENT:
-            self.syncer.syncCert()
 
     def _step_channels(self):
         try:
@@ -395,7 +390,6 @@ class Syncer:
 
         self._requested_channels = channels
         self.mountpoint = OPTIONS.mount_point
-        self.rhn_cert = OPTIONS.rhn_cert
         self.listChannelsYN = listChannelsYN
         self.forceAllErrata = forceAllErrata
         self.sslYN = not OPTIONS.no_ssl
@@ -543,87 +537,6 @@ class Syncer:
 
     def import_orgs(self):
         self._process_simple("getOrgsXmlStream", "orgs")
-
-    def syncCert(self):
-        "sync the Red Hat Satellite cert if applicable (to local DB & filesystem)"
-
-        store_cert = True
-        if self.mountpoint:
-            if self.rhn_cert:
-                # Certificate was presented on the command line
-                try:
-                    cert = open(self.rhn_cert).read()
-                except IOError, e:
-                    raise RhnSyncException(_("Unable to open file %s: %s") % (
-                        self.rhn_cert, e)), None, sys.exc_info()[2]
-                cert = cert.strip()
-            else:
-                # Try to retrieve the certificate from the database
-                row = satCerts.retrieve_db_cert()
-                if row is None:
-                    raise RhnSyncException(_("No certificate found. "
-                                             "Please use --rhn-cert"))
-                cert = row['cert']
-                store_cert = False
-        else:
-            log2(1, 3, ["", _("RHN Entitlement Certificate sync")])
-            certSource = xmlWireSource.CertWireSource(self.systemid, self.sslYN,
-                                                      self.xml_dump_version)
-            cert = certSource.download().strip()
-
-        return self._process_cert(cert, store_cert)
-
-    @staticmethod
-    def _process_cert(cert, store_cert=1):
-        """Give the cert a check - if it's broken xml we'd better find it out
-           now
-        """
-        log2(1, 4, _("    - parsing for sanity"))
-        sat_cert = satellite_cert.SatelliteCert()
-        try:
-            sat_cert.load(cert)
-        except satellite_cert.ParseException:
-            # XXX figure out what to do
-            raise RhnSyncException(_("Error parsing the satellite cert")), None, sys.exc_info()[2]
-
-        # pylint: disable=E1101
-        # Compare certificate generation - should match the stream's
-        generation = rhnFlags.get('stream-generation')
-        if sat_cert.generation != generation:
-            raise RhnSyncException(_("""\
-Unable to import certificate:
-channel dump generation %s incompatible with cert generation %s.
-Please contact your RHN representative""") % (generation, sat_cert.generation))
-
-        satCerts.set_slots_from_cert(sat_cert, testonly=True)
-
-        # push it into the database
-        log2(1, 4, _("    - syncing to local database"))
-
-        # possible place for bug 146395
-
-        # Populate channel family permissions
-        sync_handlers.populate_channel_family_permissions(sat_cert)
-
-        # Get rid of the extra channel families
-        sync_handlers.purge_extra_channel_families()
-
-        if store_cert:
-            # store it! (does a commit)
-            # XXX bug 146395
-            satCerts.storeRhnCert(cert)
-
-        # Fix the channel family counts now
-        sync_handlers.update_channel_family_counts()
-
-        if store_cert:
-            # save it to disk
-            log2(1, 4, _("    - syncing to disk %s") %
-                 _DEFAULT_RHN_ENTITLEMENT_CERT_BACKUP)
-            fileutils.rotateFile(_DEFAULT_RHN_ENTITLEMENT_CERT_BACKUP, depth=5)
-            open(_DEFAULT_RHN_ENTITLEMENT_CERT_BACKUP, 'wb').write(cert)
-
-        log2(1, 3, _("RHN Entitlement Certificate sync complete"))
 
     def processChannelFamilies(self):
         self._process_simple("getChannelFamilyXmlStream", "channel-families")
@@ -947,10 +860,10 @@ Please contact your RHN representative""") % (generation, sat_cert.generation))
                 channel_label)
             self._missing_channel_packages[channel_label] = []
             self._missing_fs_packages[channel_label] = []
-            self._proces_batch(channel_label, upids[:], None,
-                               self._diff_packages_process,
-                               _('Diffing:    '),
-                               [channel_label])
+            self._process_batch(channel_label, upids[:], None,
+                                self._diff_packages_process,
+                                _('Diffing:    '),
+                                [channel_label])
 
         self._verify_missing_channel_packages(self._missing_channel_packages)
 
@@ -1108,8 +1021,8 @@ Please contact your RHN representative""") % (generation, sat_cert.generation))
 
         sorted_channels = sorted(missing_packages.items(), key=lambda x: x[0])  # sort by channel
         for channel, pids in sorted_channels:
-            self._proces_batch(channel, pids[:], messages.package_parsing,
-                               stream_loader.process, is_slow=True)
+            self._process_batch(channel, pids[:], messages.package_parsing,
+                                stream_loader.process, is_slow=True)
         stream_loader.close()
 
         # Double-check that we got all the packages
@@ -1228,10 +1141,10 @@ Please contact your RHN representative""") % (generation, sat_cert.generation))
             log(1, _("Diffing source package metadata (what's missing locally?): %s") % channel_label)
             self._missing_channel_src_packages[channel_label] = []
             self._missing_fs_source_packages[channel_label] = []
-            self._proces_batch(channel_label, upids[:], None,
-                               self._diff_source_packages_process,
-                               _('Diffing:    '),
-                               [channel_label])
+            self._process_batch(channel_label, upids[:], None,
+                                self._diff_source_packages_process,
+                                _('Diffing:    '),
+                                [channel_label])
 
         self._verify_missing_channel_packages(self._missing_channel_src_packages, sources=1)
 
@@ -1246,8 +1159,8 @@ Please contact your RHN representative""") % (generation, sat_cert.generation))
             self.xmlDataServer, 'getSourcePackageXmlStream')
 
         for channel, pids in missing_packages.items():
-            self._proces_batch(channel, pids[:], messages.package_parsing,
-                               stream_loader.process, is_slow=True)
+            self._process_batch(channel, pids[:], messages.package_parsing,
+                                stream_loader.process, is_slow=True)
         stream_loader.close()
 
         # Double-check that we got all the packages
@@ -1334,8 +1247,8 @@ Please contact your RHN representative""") % (generation, sat_cert.generation))
             self.xmlDataServer, 'getKickstartsXmlStream')
 
         for channel, ktids in self._channel_kickstarts.items():
-            self._proces_batch(channel, ktids[:], messages.kickstart_parsing,
-                               stream_loader.process)
+            self._process_batch(channel, ktids[:], messages.kickstart_parsing,
+                                stream_loader.process)
         stream_loader.close()
 
         missing_ks_files = self._compute_missing_ks_files()
@@ -1343,10 +1256,10 @@ Please contact your RHN representative""") % (generation, sat_cert.generation))
         log(1, ["", _("Downloading kickstartable trees files")])
         sorted_channels = sorted(missing_ks_files.items(), key=lambda x: x[0])  # sort by channel
         for channel, files in sorted_channels:
-            self._proces_batch(channel, files[:], messages.kickstart_downloading,
-                               self._download_kickstarts_file,
-                               nevermorethan=1,
-                               process_function_args=[channel])
+            self._process_batch(channel, files[:], messages.kickstart_downloading,
+                                self._download_kickstarts_file,
+                                nevermorethan=1,
+                                process_function_args=[channel])
 
     def _get_ks_file_stream(self, channel, kstree_label, relative_path):
         if self.mountpoint:
@@ -1540,8 +1453,8 @@ Please contact your RHN representative""") % (generation, sat_cert.generation))
 
         sorted_channels = sorted(not_cached_errata.items(), key=lambda x: x[0])  # sort by channel
         for channel, erratum_ids in sorted_channels:
-            self._proces_batch(channel, erratum_ids[:], messages.erratum_parsing,
-                               stream_loader.process)
+            self._process_batch(channel, erratum_ids[:], messages.erratum_parsing,
+                                stream_loader.process)
         stream_loader.close()
         # XXX This step should go away once the channel info contains the
         # errata timestamps and advisory names
@@ -1570,12 +1483,12 @@ Please contact your RHN representative""") % (generation, sat_cert.generation))
             pb.printIncrement()
         pb.printComplete()
 
-    def _proces_batch(self, channel, batch, log_msg,
-                      process_function,
-                      prompt=_('Downloading:'),
-                      process_function_args=(),
-                      nevermorethan=None,
-                      is_slow=False):
+    def _process_batch(self, channel, batch, log_msg,
+                       process_function,
+                       prompt=_('Downloading:'),
+                       process_function_args=(),
+                       nevermorethan=None,
+                       is_slow=False):
         count = len(batch)
         if log_msg:
             log(1, log_msg % (channel, count or _('NONE RELEVANT')))
@@ -1606,11 +1519,11 @@ Please contact your RHN representative""") % (generation, sat_cert.generation))
 
         sorted_channels = sorted(missing_channel_items.items(), key=lambda x: x[0])  # sort by channel
         for channel, packages in sorted_channels:
-            self._proces_batch(channel, packages[:],
-                               messages.package_importing,
-                               self._import_packages_process,
-                               _('Importing:  '),
-                               [sources])
+            self._process_batch(channel, packages[:],
+                                messages.package_importing,
+                                self._import_packages_process,
+                                _('Importing:  '),
+                                [sources])
         return self._link_channel_packages()
 
     def _link_channel_packages(self):
@@ -1683,8 +1596,8 @@ Please contact your RHN representative""") % (generation, sat_cert.generation))
                     self._fix_erratum(erratum)
                     batch.append(erratum)
 
-            self._proces_batch(chn, batch, messages.errata_importing,
-                               sync_handlers.import_errata)
+            self._process_batch(chn, batch, messages.errata_importing,
+                                sync_handlers.import_errata)
 
     @staticmethod
     def _fix_erratum(erratum):
@@ -2149,9 +2062,6 @@ def processCommandline():
                help=_('org to which the sync imports data. defaults to the admin account')),
         Option('-p', '--print-configuration', action='store_true',
                help=_('print the configuration and exit')),
-        Option('--rhn-cert',            action='store',
-               help=_('satellite certificate to import ') +
-               _('(use with --mount-point only)')),
         Option('-s', '--server',        action='store',
                help=_('alternative server with which to connect (hostname)')),
         Option('--step',                action='store',
@@ -2362,18 +2272,7 @@ def processCommandline():
                 None, sys.exc_info()[2]
 
     OPTIONS.mount_point = fileutils.cleanupAbsPath(OPTIONS.mount_point)
-    OPTIONS.rhn_cert = fileutils.cleanupAbsPath(OPTIONS.rhn_cert)
     OPTIONS.systemid = fileutils.cleanupAbsPath(OPTIONS.systemid)
-
-    if OPTIONS.rhn_cert:
-        if not OPTIONS.mount_point:
-            msg = _("ERROR: --rhn-cert requires --mount-point")
-            log2stderr(-1, msg, cleanYN=1)
-            sys.exit(23)
-        if not os.path.isfile(OPTIONS.rhn_cert):
-            msg = _("ERROR: no such file %s") % OPTIONS.rhn_cert
-            log2stderr(-1, msg, cleanYN=1)
-            sys.exit(24)
 
     if OPTIONS.mount_point:
         if not os.path.isdir(OPTIONS.mount_point):
@@ -2407,7 +2306,6 @@ def processCommandline():
                _("  20 - Could not connect to db."),
                _("  21 - Bad debug level"),
                _("  22 - Not valid step"),
-               _("  23 - error: --rhn-cert requires --mount-point"),
                _("  24 - no such file"),
                _("  25 - no such directory"),
                _("  26 - mount_point does not exist"),

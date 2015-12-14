@@ -35,11 +35,8 @@ def systemExit(code, msgs=None):
     sys.exit(code)
 
 
-try:
-    import os
-    import socket
-except KeyboardInterrupt:
-    systemExit(0, "\nUser interrupted process.")
+import os
+import socket
 
 
 # quick check to see if you are a super-user.
@@ -203,7 +200,6 @@ if __name__ == '__main__':
 # 20 Could not connect to db.
 # 21 Bad debug level
 # 22 Not valid step
-# 23 error: --rhn-cert requires --mount-point
 # 24 no such file
 # 25 no such directory
 # 26 ISS parent is not configure for ISS

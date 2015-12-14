@@ -19,12 +19,9 @@ Red Hat login, in combination with an active Red Hat subscription,
 provides you with access to manage systems on @@PRODUCT_NAME@@.
 
   Red Hat login: {2}
-       Password: {3}
          e-mail: {4}
 
-  {5}
-
-Important: Please change your password upon logging in.
+Please proceed to {3} to set your password and enable your account.
 
 Thank you for using @@PRODUCT_NAME@@.
 {6}</source>
@@ -66,12 +63,9 @@ Red Hat login, in combination with an active Red Hat subscription,
 provides you with access to manage systems on @@PRODUCT_NAME@@.
 
   Red Hat login: {0}
-       Password: {1}
          e-mail: {2}
 
-  {3}
-
-Important: Please change your password upon logging in.
+Please proceed to {1} to set your password and enable your account.
 
 Thank you for using @@PRODUCT_NAME@@.
 {4}</source>
@@ -427,136 +421,30 @@ https://{4}/rhn/account/UserPreferences.do
 {6}
 </target>
       </trans-unit>
-      <trans-unit id="email.satellitecert.graceperiod.subject">
-        <source>@@PRODUCT_NAME@@ Certificate expiration warning</source>
-        <context-group name="ctx">
-          <context context-type="sourcefile">Taskomatic: @@PRODUCT_NAME@@CertificateCheck</context>
-        </context-group>
-        <target>Red Hat @@PRODUCT_NAME@@ 서버 인증서 만료 경고 </target>
-      </trans-unit>
-      <trans-unit id="email.satellitecert.graceperiod.body">
-        <source>
-Dear @@PRODUCT_NAME@@ User,
-
-This email is being sent to you to inform you that your @@PRODUCT_NAME@@ Certificate
-has expired on your {0} server. After {1} day(s) the systems
-management services provided by your @@PRODUCT_NAME@@ Server will be restricted for {2} days.
-After that the services will become inaccessible.</source>
-        <context-group name="ctx">
-          <context context-type="sourcefile">Taskomatic: @@PRODUCT_NAME@@CertificateCheck</context>
-          <context context-type="paramnotes">
-          {0} - Hostname of the @@PRODUCT_NAME@@ Whose Cert has Expired: highwind.devel.redhat.com
-          {1} - Days Until satellite certificate expiration: 7
-          </context>
-        </context-group>
-        <target>
-@@PRODUCT_NAME@@ 사용자님께
-
-이 이메일은 {0} 서버에서 @@PRODUCT_NAME@@ 인증서가 만료되었음을 알려드리기 위해 전송되었습니다.
-{1}일 후 @@PRODUCT_NAME@@ 서버에서 제공하는 시스템
-관리 서비스는 {2}일로 제한됩니다.
-그 후 서비스에 액세스할 수 없게 됩니다.</target>
-      </trans-unit>
-      <trans-unit id="email.satellitecert.expired.subject">
-        <source>@@PRODUCT_NAME@@ Certificate expiration notice</source>
-        <context-group name="ctx">
-          <context context-type="sourcefile">Taskomatic: @@PRODUCT_NAME@@CertificateCheck</context>
-        </context-group>
-        <target>Red Hat satellite 인증서 만료 통지</target>
-      </trans-unit>
-      <trans-unit id="email.satellitecert.spwbodyend">
-        <source>
-
-
-Thank you for using @@PRODUCT_NAME@@.
---the @@PRODUCT_NAME@@ Team
-</source>
-        <context-group name="ctx">
-          <context context-type="sourcefile">Taskomatic: @@PRODUCT_NAME@@CertificateCheck</context>
-        </context-group>
-        <target>
-
-
-@@PRODUCT_NAME@@을 사용해 주셔서 감사합니다.
---@@PRODUCT_NAME@@팀 
-</target>
-      </trans-unit>
-      <trans-unit id="email.satellitecert.satbodyend">
-        <source>
-Please visit the following url for steps on how to request or generate a new @@PRODUCT_NAME@@ certificate: https://access.redhat.com/knowledge/tools/satcert
-
-
-Thank you for using @@PRODUCT_NAME@@.
---the @@PRODUCT_NAME@@ Team
-</source>
-        <context-group name="ctx">
-          <context context-type="sourcefile">Taskomatic: @@PRODUCT_NAME@@CertificateCheck</context>
-        </context-group>
-        <target>
-새로운 @@PRODUCT_NAME@@ 인증서를 요청하거나 생성하는 방법에 대한 자세한 내용은 다음 URL에서 확인하십시오: https://access.redhat.com/knowledge/tools/satcert
-
-
-@@PRODUCT_NAME@@를 이용해 주셔서 감사합니다.
---@@PRODUCT_NAME@@ 팀
-</target>
-      </trans-unit>
-      <trans-unit id="email.satellitecert.restricted.body">
-        <source>
-Dear @@PRODUCT_NAME@@ User,
-
-This email is being sent to you to inform you that your @@PRODUCT_NAME@@ Certificate
-has expired on your {0} server. Your Satellite is on day {1} of {2} day restricted period
-and will soon stop functioning.</source>
-        <target>
-@@PRODUCT_NAME@@ 사용자님께,
-
-이 이메일은 {0} 서버에서 @@PRODUCT_NAME@@ 인증서가
-만료되었음을 알려드리기 위해 전송되었습니다. 귀하의 Satellite 서버는 {2}일 제한 기간 중 {1}일째이며 곧 기능이 중지됩니다.
- </target>
-      </trans-unit>
-      <trans-unit id="email.satellitecert.expired.body">
-        <source>
-Dear @@PRODUCT_NAME@@ User,
-
-This email is being sent to you to inform you that your @@PRODUCT_NAME@@ Certificate
-has expired on your {0} server. The system management services will be inaccessible
-until your certificate is renewed.</source>
-        <context-group name="ctx">
-          <context context-type="sourcefile">Taskomatic: @@PRODUCT_NAME@@CertificateCheck</context>
-          <context context-type="paramnotes">{0} - Hostname of the @@PRODUCT_NAME@@ Whose Cert has Expired: highwind.devel.redhat.com </context>
-        </context-group>
-        <target>
-@@PRODUCT_NAME@@ 사용자님께,
-
-이 이메일은 @@PRODUCT_NAME@@ 인증서가 귀하의 {0} 서버에서 만료되었음을 알려드리기 위해
-전송되었습니다. 귀하의 인증서가 갱신될 때 까지 시스템 관리 서비스에
-액세스할 수 없습니다. </target>
-      </trans-unit>
       <trans-unit id="email.forgotten.password">
         <source>
 [ This is an automated email sent to {0} at your request. ]
 
-Your @@PRODUCT_NAME@@ password has been reset.  To sign in, go to:
+A request to reset the @@PRODUCT_NAME@@ password for login {2} has been made.
 
-https://{1}/
+To continue the reset process, please proceed to:
 
-And use the following username and password:
+{1}
 
-Username: {2}
-Password: {3}
+If you don't want your password reset, you can ignore this email.
 
-Once you have logged in, you may then change your password.
-
-If you continue to have difficulties logging in, please contact
-your @@PRODUCT_NAME@@ administrator for further assistance.
+If you experience any further difficulties with the reset process,
+please contact your @@PRODUCT_NAME@@ administrator for further assistance.
 
 Thank you for using @@PRODUCT_NAME@@.
         </source>
-        <context-group name="ctx"><context context-type="sourcefile">ForgotCredentials</context><context context-type="paramnotes">
+        <context-group name="ctx">
+            <context context-type="sourcefile">ForgotCredentials</context>
+            <context context-type="paramnotes">
             {0} - Email address
-            {1} - Hostname of the @@PRODUCT_NAME@@</context>
+            {1} - Password-reset link
             {2} - Username
-            {3} - Password
+            </context>
         </context-group>
         <target>
 [ 이는 귀하의 요청에 따라 {0}에 자동으로 전송되는 이메일입니다. ]
@@ -604,6 +492,27 @@ Thank you for using @@PRODUCT_NAME@@.
             {0} - Email address
             {1} - Existing logins
             {2} - Hostname of the @@PRODUCT_NAME@@</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="email.reset.password">
+        <source>
+[ This is an automated email sent to {0}. ]
+
+The @@PRODUCT_NAME@@ password for login {1} has been reset in response to a reset-request
+made at {2}
+
+If you did not initiate this password reset, please IMMEDIATELY contact the @@PRODUCT_NAME@@
+administrator at {2} for further assistance.
+
+Thank you for using @@PRODUCT_NAME@@.
+        </source>
+        <context-group name="ctx">
+          <context context-type="sourcefile">ResetPasswordSubmit</context>
+          <context context-type="paramnotes">
+            {0} - Email address
+            {1} - Associated login
+            {2} - Hostname of the @@PRODUCT_NAME@@
+          </context>
         </context-group>
       </trans-unit>
     </body>

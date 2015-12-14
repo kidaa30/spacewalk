@@ -116,7 +116,6 @@ sub parse_options {
             "skip-logfile-init",
             "clear-db",
             "re-register",
-            "disconnected",
             "answer-file=s",
             "non-interactive",
             "upgrade",
@@ -135,7 +134,7 @@ sub parse_options {
 
   my $usage = loc("usage: %s %s\n",
                   $0,
-                  "[ --help ] [ --answer-file=<filename> ] [ --non-interactive ] [ --skip-system-version-test ] [ --skip-selinux-test ] [ --skip-fqdn-test ] [ --skip-db-install ] [ --skip-db-diskspace-check ] [ --skip-db-population ] [ --skip-gpg-key-import ] [ --skip-ssl-cert-generation ] [--skip-ssl-vhost-setup] [ --skip-services-check ] [ --clear-db ] [ --re-register ] [ --disconnected ] [ --upgrade ] [ --run-updater=<yes|no>] [--run-cobbler] [ --enable-tftp=<yes|no>] [ --external-oracle | --external-postgresql [ --external-postgresql-over-ssl ] ]" );
+                  "[ --help ] [ --answer-file=<filename> ] [ --non-interactive ] [ --skip-system-version-test ] [ --skip-selinux-test ] [ --skip-fqdn-test ] [ --skip-db-install ] [ --skip-db-diskspace-check ] [ --skip-db-population ] [ --skip-gpg-key-import ] [ --skip-ssl-cert-generation ] [--skip-ssl-vhost-setup] [ --skip-services-check ] [ --clear-db ] [ --re-register ] [ --upgrade ] [ --run-updater=<yes|no>] [--run-cobbler] [ --enable-tftp=<yes|no>] [ --external-oracle | --external-postgresql [ --external-postgresql-over-ssl ] ]" );
 
   # Terminate if any errors were encountered parsing the command line args:
   my %opts;
@@ -793,7 +792,7 @@ REDO_CONNECT:
 
         ask(
                 -noninteractive => $opts->{"non-interactive"},
-                -question => "Database service name (SID)",
+                -question => "Global Database Name or SID (requires tnsnames.ora)",
                 -test => qr/\S+/,
                 -answer => \$answers->{'db-name'}
         );
@@ -1280,6 +1279,7 @@ sub migrate_ora2pg {
   log_rotate(DB_MIGRATION_LOG_FILE);
   system_or_exit(["/bin/bash", "-c",
         "(set -o pipefail; /usr/bin/spacewalk-dump-schema" .
+        "--upgrade" .
         " --db=" . $oracle_creds->{'db-name'} .
         " --user=" . $oracle_creds->{'db-user'} .
         " --password=" . $oracle_creds->{'db-password'} . " | spacewalk-sql" .
@@ -1863,13 +1863,10 @@ See answers.txt for an example.
 For use only with --answer-file.  If the --answer-file doesn't provide
 a required response, exit instead of prompting the user.
 
+# todo @
 =item B<--re-register>
 
 Register the system with RHN, even if it is already registered.
-
-=item B<--disconnected>
-
-Install the satellite in disconnected mode.
 
 =item B<--clear-db>
 

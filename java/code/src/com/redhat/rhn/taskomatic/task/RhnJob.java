@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2010 Red Hat, Inc.
+ * Copyright (c) 2010--2015 Red Hat, Inc.
  *
  * This software is licensed to you under the GNU General Public License,
  * version 2 (GPLv2). There is NO WARRANTY for this software, express or
@@ -24,7 +24,7 @@ import org.quartz.JobExecutionException;
  * RhnJob
  * @version $Rev$
  */
-public abstract interface RhnJob extends Job {
+public interface RhnJob extends Job {
 
     String DEFAULT_LOGGING_LAYOUT = "%d [%t] %-5p %c %x - %m%n";
 

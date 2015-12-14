@@ -160,17 +160,8 @@ class ChannelFamily(Information):
         'label': StringType,
         'product_url': StringType,
         'channels': [StringType],
-    }
-
-
-class ChannelFamilyPermissions(Information):
-    attributeTypes = {
-        'channel_family': StringType,
         'org_id': IntType,
-        'max_members': IntType,
-        'max_flex': IntType,
     }
-
 
 class DistChannelMap(Information):
     attributeTypes = {
@@ -180,7 +171,6 @@ class DistChannelMap(Information):
         'channel': StringType,
         'org_id': IntType,
     }
-
 
 class ReleaseChannelMap(Information):
     attributeTypes = {

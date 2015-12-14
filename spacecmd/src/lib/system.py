@@ -599,8 +599,11 @@ def do_system_listhardware(self, args):
                     print
                 count += 1
 
-                print 'Description: %s' % (
-                    wrap(device.get('description'), 60)[0])
+                if device.get('description') == None:
+                    print 'Description: None'
+                else:
+                    print 'Description: %s' % (
+                        wrap(device.get('description'), 60)[0])
                 print 'Driver:      %s' % device.get('driver')
                 print 'Class:       %s' % device.get('device_class')
                 print 'Bus:         %s' % device.get('bus')
@@ -2496,13 +2499,13 @@ def do_system_details(self, args, short=False):
                                                      system_id)
 
         ranked_config_channels = []
-        if 'provisioning_entitled' in entitlements:
-            config_channels = \
-                self.client.system.config.listChannels(self.session,
-                                                       system_id)
 
-            for channel in config_channels:
-                ranked_config_channels.append(channel.get('label'))
+        config_channels = \
+            self.client.system.config.listChannels(self.session,
+                                                   system_id)
+
+        for channel in config_channels:
+            ranked_config_channels.append(channel.get('label'))
 
         print
         print 'Hostname:      %s' % network.get('hostname')

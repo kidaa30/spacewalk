@@ -1,5 +1,5 @@
 Name:           oracle-lib-compat
-Version:        11.2.0.12
+Version:        11.2.0.13
 Release:        1%{?dist}
 Summary:        Compatibility package so that perl-DBD-Oracle will install
 Group:          Applications/Multimedia
@@ -12,6 +12,8 @@ License:        GPLv2
 URL:            https://fedorahosted.org/spacewalk
 Source0:	https://fedorahosted.org/releases/s/p/spacewalk/%{name}-%{version}.tar.gz
 BuildRoot:      %{_tmppath}/%{name}-root-%(%{__id_u} -n)
+
+%define debug_package %{nil}
 
 %ifarch s390 s390x
 %define icversion 10.2.0.4
@@ -105,6 +107,9 @@ find %{_prefix}/lib/oracle/%{icdir} \
         | xargs execstack -c
 
 %changelog
+* Tue Nov 10 2015 Tomas Kasparek <tkasparek@redhat.com> 11.2.0.13-1
+- don't build debug package for oracle-lib-compat
+
 * Thu Jan 29 2015 Tomas Lestach <tlestach@redhat.com> 11.2.0.12-1
 - we need to use the exact oracle instantclient version
 

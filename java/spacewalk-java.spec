@@ -1,14 +1,9 @@
-%{!?__redhat_release:%define __redhat_release UNKNOWN}
 %define cobprofdir      %{_localstatedir}/lib/rhn/kickstarts
 %define cobprofdirup    %{_localstatedir}/lib/rhn/kickstarts/upload
 %define cobprofdirwiz   %{_localstatedir}/lib/rhn/kickstarts/wizard
 %define cobdirsnippets  %{_localstatedir}/lib/rhn/kickstarts/snippets
 %define realcobsnippetsdir  %{_localstatedir}/lib/cobbler/snippets
 
-%if  0%{?rhel} && 0%{?rhel} < 6
-%define appdir          %{_localstatedir}/lib/tomcat5/webapps
-%define jardir          %{_localstatedir}/lib/tomcat5/webapps/rhn/WEB-INF/lib
-%else
 %if 0%{?fedora} || 0%{?rhel} >= 7
 %define appdir          %{_localstatedir}/lib/tomcat/webapps
 %define jardir          %{_localstatedir}/lib/tomcat/webapps/rhn/WEB-INF/lib
@@ -16,18 +11,14 @@
 %define appdir          %{_localstatedir}/lib/tomcat6/webapps
 %define jardir          %{_localstatedir}/lib/tomcat6/webapps/rhn/WEB-INF/lib
 %endif
-%endif
 
-%if 0%{?fedora} || 0%{?rhel} >= 6
-# RHEL5 checkstyle4 is incompatible with checkstyle5
 %define run_checkstyle  1
-%endif
 
 Name: spacewalk-java
 Summary: Java web application files for Spacewalk
 Group: Applications/Internet
 License: GPLv2
-Version: 2.4.20
+Version: 2.5.26
 Release: 1%{?dist}
 URL:       https://fedorahosted.org/spacewalk
 Source0:   https://fedorahosted.org/releases/s/p/spacewalk/%{name}-%{version}.tar.gz 
@@ -38,7 +29,7 @@ ExcludeArch: ia64
 Requires: bcel
 Requires: c3p0 >= 0.9.1
 Requires: classpathx-mail
-Requires: cobbler >= 2.0.0
+Requires: cobbler20
 Requires: dojo
 Requires: dwr >= 3
 Requires: jakarta-commons-el
@@ -80,15 +71,6 @@ Requires: hibernate3 = 0:3.2.4
 BuildRequires: hibernate3 = 0:3.2.4
 %endif
 # EL5 = Struts 1.2 and Tomcat 5, EL6+/recent Fedoras = 1.3 and Tomcat 6
-%if 0%{?rhel} && 0%{?rhel} < 6
-Requires: jasper5
-Requires: struts >= 0:1.2.9
-Requires: tomcat5
-Requires: tomcat5-servlet-2.4-api
-BuildRequires: jasper5
-BuildRequires: jsp
-BuildRequires: struts >= 0:1.2.9
-%else
 %if 0%{?fedora} || 0%{?rhel} >= 7
 Requires: struts >= 0:1.3.0
 Requires: tomcat >= 7
@@ -107,7 +89,6 @@ BuildRequires: struts >= 0:1.3.0
 BuildRequires: struts-taglib >= 0:1.3.0
 BuildRequires: tomcat6
 BuildRequires: tomcat6-lib
-%endif
 %endif
 %if 0%{?fedora} || 0%{?rhel} >=7
 Requires:      apache-commons-cli
@@ -232,14 +213,10 @@ and taskomatic process.
 Summary: Oracle database backend support files for Spacewalk Java
 Group: Applications/Internet
 Requires: ojdbc14
-%if  0%{?rhel} && 0%{?rhel} < 6
-Requires: tomcat5
-%else
 %if 0%{?fedora} || 0%{?rhel} >= 7
 Requires: tomcat >= 7
 %else
 Requires: tomcat6
-%endif
 %endif
 Provides: spacewalk-java-jdbc = %{version}-%{release}
 
@@ -250,14 +227,10 @@ This package contains Oracle database backend files for the Spacewalk Java.
 Summary: PostgreSQL database backend support files for Spacewalk Java
 Group: Applications/Internet
 Requires: postgresql-jdbc
-%if  0%{?rhel} && 0%{?rhel} < 6
-Requires: tomcat5
-%else
 %if 0%{?fedora} || 0%{?rhel} >=7
 Requires: tomcat >= 7
 %else
 Requires: tomcat6
-%endif
 %endif
 Provides: spacewalk-java-jdbc = %{version}-%{release}
 
@@ -300,7 +273,7 @@ Requires: cglib
 
 Requires: bcel
 Requires: c3p0 >= 0.9.1
-Requires: cobbler >= 2.0.0
+Requires: cobbler20
 Requires: concurrent
 Requires: jakarta-taglibs-standard
 Requires: java >= 0:1.6.0
@@ -455,11 +428,6 @@ ln -s -f %{_javadir}/jboss-logging/jboss-logging.jar $RPM_BUILD_ROOT%{_javadir}/
 
 %endif
 
-%if  0%{?rhel} && 0%{?rhel} < 6
-ant -Dprefix=$RPM_BUILD_ROOT install-tomcat5
-install -d -m 755 $RPM_BUILD_ROOT%{_sysconfdir}/tomcat5/Catalina/localhost/
-install -m 755 conf/rhn.xml $RPM_BUILD_ROOT%{_sysconfdir}/tomcat5/Catalina/localhost/rhn.xml
-%else
 %if 0%{?fedora} || 0%{?rhel} >= 7
 ant -Dprefix=$RPM_BUILD_ROOT install-tomcat7
 install -d -m 755 $RPM_BUILD_ROOT%{_sysconfdir}/tomcat/Catalina/localhost/
@@ -468,7 +436,6 @@ install -m 755 conf/rhn.xml $RPM_BUILD_ROOT%{_sysconfdir}/tomcat/Catalina/localh
 ant -Dprefix=$RPM_BUILD_ROOT install-tomcat6
 install -d -m 755 $RPM_BUILD_ROOT%{_sysconfdir}/tomcat6/Catalina/localhost/
 install -m 755 conf/rhn.xml $RPM_BUILD_ROOT%{_sysconfdir}/tomcat6/Catalina/localhost/rhn.xml
-%endif
 %endif
 
 # check spelling errors in all resources for English if aspell installed
@@ -694,24 +661,10 @@ fi
 %{jardir}/xerces-j2.jar
 %{jardir}/xml-commons-apis.jar
 
-# asm-1.5.3-7.jpp5.noarch (F14, F13, EL6)
-# asm-1.5.3-1jpp.ep1.1.el5.2.noarch (EL5)
 %{jardir}/asm_asm.jar
-#%{jardir}/asmasm.jar
-#%{jardir}/asmasm-analysis.jar
-#%{jardir}/asmasm-attrs.jar
-#%{jardir}/asmasm-tree.jar
-#%{jardir}/asmasm-util.jar
-#%{jardir}/asmasm-xml.jar
-#%{jardir}/asmkasm.jar
 
-# EL5 = Struts 1.2 and Tomcat 5, EL6+/recent Fedoras = 1.3 and Tomcat 6
-%if 0%{?rhel} && 0%{?rhel} < 6
-%{jardir}/struts.jar
-%else
 %{jardir}/struts*.jar
 %{jardir}/commons-chain.jar
-%endif
 
 %dir %{cobprofdir}
 %dir %{cobprofdirup}
@@ -722,14 +675,10 @@ fi
 %config %{cobdirsnippets}/post_reactivation_key
 %config %{cobdirsnippets}/post_delete_system
 %config %{cobdirsnippets}/redhat_register
-%if  0%{?rhel} && 0%{?rhel} < 6
-%config(noreplace) %{_sysconfdir}/tomcat5/Catalina/localhost/rhn.xml
-%else
 %if 0%{?fedora} || 0%{?rhel} >= 7
 %config(noreplace) %{_sysconfdir}/tomcat/Catalina/localhost/rhn.xml
 %else
 %config(noreplace) %{_sysconfdir}/tomcat6/Catalina/localhost/rhn.xml
-%endif
 %endif
 %{realcobsnippetsdir}/spacewalk
 %dir %attr(755, tomcat, root) %{_var}/spacewalk/systemlogs
@@ -769,6 +718,677 @@ fi
 %{jardir}/postgresql-jdbc.jar
 
 %changelog
+* Thu Dec 10 2015 Jan Dobes 2.5.26-1
+- 1274282 - Teach CobblerSyncProfile that profiles might disappear in mid-run
+
+* Wed Dec 09 2015 Jan Dobes 2.5.25-1
+- moving smtp_server parameter to java
+- making chat icon visible and better placed
+- moving chat_enabled parameter to java
+- moving actions_display_limit parameter to java
+- moving base_domain and base_port parameters to java
+- compile jspf files differently to avoid problems with Tomcat 8
+- fix jar versions on fedora23
+
+* Mon Dec 07 2015 Jan Dobes 2.5.24-1
+- cleanup create user page since we don't create first user there anymore
+
+* Mon Dec 07 2015 Jan Dobes 2.5.23-1
+- better set logging user earlier
+- removing entitlements info
+
+* Mon Dec 07 2015 Jan Dobes 2.5.22-1
+- adding setup for first organization
+- fixing select with null
+- redirecting jsp files to create first org instead of user
+
+* Fri Dec 04 2015 Tomas Lestach <tlestach@redhat.com> 2.5.21-1
+- 1287829 - make sure package from a right child channel is provided for
+  kickstart
+
+* Fri Dec 04 2015 Jan Dobes 2.5.20-1
+- when installing insert default SSL crypto key with null org
+
+* Thu Dec 03 2015 Jan Dobes 2.5.19-1
+- fixing confusing name and making difference between create first user form
+  and create normal user form
+- restyle page for creating users
+- remove RHEL 5 related things - we don't build on el5 anymore
+- remove remnants of old Fedora/RHEL versions
+- remove unused macro
+- removing unused code
+
+* Fri Nov 27 2015 Tomas Lestach <tlestach@redhat.com> 2.5.18-1
+- BugFix: skip similar tasks only if task is 'single threaded'
+- 1076490 - prefer the package from the given channel
+
+* Thu Nov 26 2015 Jan Dobes 2.5.17-1
+- removing link to removed page
+- ActionChainHandler: javadoc fixes
+- replace html:select with simple select to fix plain text printing
+
+* Wed Nov 25 2015 Tomas Kasparek <tkasparek@redhat.com> 2.5.16-1
+- BZ-1284101 Incorrect query parameters cause unique constraint violations when
+  cloning errata
+
+* Tue Nov 24 2015 Jan Dobes 2.5.15-1
+- SystemEntitlementsSetupActionTest: stale comment removed
+- java: remove unused imports
+- drop usage of rhnOrgEntitlements and rhnOrgEntitlementsType tables
+- drop OrgFactory.lookupEntitlementByLabel() and references
+- drop getEntitlementEnterprise() and references
+- drop getEntitlementVirtualization() and references
+- drop use of org_entitlements() acl checks from jsps
+- drop use of org_entitlements() acls from navigation
+- java: fix entitlement-testing cases
+- java: remove repoll parameter from
+  rhn_entitlements.remove_server_entitlement()
+- i18n: unused strings removed
+- OrgHandler: remove unused constants
+- SystemEntitlementsSetupAction: remove useless check
+- ChannelFamilyFactoryTest: unused method removed
+- ChannelFamilyFactoryTest: fix checkstyle issue
+- LoginSetupActionTest: remove tests that are not relevant anymore
+- OrgFactoryTest: drop test, does not make sense anymore
+- SystemDetailsEditActionTest.testAddonEntitlemntsList: fix
+- SystemEntitlementsSetupActionTest: fix
+- SystemHandler: remove comment leftover
+- ChannelFamilyFactoryTest: remove entitlement leftovers
+- SystemManagerTest: remove test, it does not make sense in the end
+- SystemGroupOvervirew: remove unused code
+- ServerGroupTest: dead code removal
+- SummaryPopulation Taskomatic task: assume all orgs always have enterprise
+  entitlements
+- SystemHandler.listGroups: visible system groups have no max members, simplify
+  query
+- EntitlementServerGroup: remove references to max_members from the class and
+  test code
+- i18n: unused strings removed
+- EntitlementServerGroupSerializer: unused, removed
+- i18n: unused strings removed
+- EntitlementManager: remove dead code
+- SystemManager: don't check entitlement counts when changing a system's
+  entitlements
+- SystemEntitlementsSubmitAction: remove dead code - available entitlement
+  count is not shown anymore
+- System Details page: don't show entitlement counts
+- UpdateOrgSystemEntitlementsCommand: drop unused code
+- OrgHandler: drop setSystemEntitlements API endpoint
+- OrgHandler/OrgManager: dead code removed
+- OrgHandler: drop listSystemEntitlements API endpoint
+- OrgHandler: drop listSystemEntitlements API endpoint
+- SystemEntitlementsDto: drop unused class
+- EntitlementManager: dead code removed
+- OrgHandler: drop listSystemEntitlements API endpoint
+- SystemEntitlementsAction: page dropped
+- SystemEntitlementDetailsAction: page dropped
+- SystemEntitlementOrgsAction: page dropped
+- OrgEntitlementDto: dead code removed
+- OrgHandler: drop listSystemEntitlementsForOrg API endpoint
+- OrgSystemSubscriptionsAction: page dropped
+- EntitledServerGroup: unused code removed
+- NotEnoughEntitlementsException: unused exception removed
+- SystemHandler.upgradeEntitlement: remove entitlement count check
+- SystemEntitlementsSetupAction: assume all entitlements are unlimited
+- ConfigureCertificateCommand: unused, dropped
+- CertificateConfig.do: page dropped
+- editlangs.sh: generalize a bit for non-jsp files
+- i18n: unused strings removed
+- SatelliteCertificateExpiredException: unused, dropped
+- SatelliteCertificate: unused, dropped
+- SatelliteFactory: unused, dropped
+- CertificateFactory: unused, dropped
+- SatelliteHandler: getCertificateExpirationDate() dropped
+- CertificateManager: unused, dropped
+- sat-cert-check Taskomatic task dropped
+- LoginExpiredTest: dropped
+- LoginSetupAction, LoginAction: don't restrict access if the certificate is
+  expired
+- java: XMLRPC restricted whitelist dead code removal
+- BaseHandler: don't restrict XMLRPC APIs if the certificate is expired
+- java: restricted whitelist dead code removal
+- AuthFilter: don't restrict page visits if the certificate is expired
+- ActivationKeyHandlerTest: avoid Java 7 constructs
+- i18n: Remove system.entitle.alreadyvirt
+- i18n: Remove virtualization_host_platform
+- i18n: Remove
+  system_entitlement_details.access_grant_desc.virtualization_host_platform
+- i18n: Remove sys_entitlements.virtualization_host_platform
+- i18n: Remove system_entitlements.virtualization_host_platform.success
+- i18n: Remove system_entitlements.virtualization_host_platform.removed.success
+- i18n: Remove system_entitlements.virtualization_host_platform.notEnoughSlots
+- i18n: Remove system_entitlements.virtualization_host_platform.noManagement
+- i18n: Remove
+  system_entitlements.virtualization_host_platform.noSolarisSupport
+- java: remove references to rhnVirtSubLevel which is not used anymore
+- java: delete class and methods not used anymore
+- java: remove test code referencing rhnVirtSublevel
+- SystemChannelsActionTest: remove commented out dead test
+- SystemManager: unused import removed
+- Removed dead localization key (virt_plat_tip)
+- Remove Virtualization Platform from hibernate
+- Remove Virtualization Platform from CommonConstants and tests
+- Remove Virtualization Platform from some tests
+- Remove Virtualization Platform checking when adding entitlement to an
+  activation key, adjust the test
+- Drop EntitlementManager.VIRTUALIZATION_PLATFORM ent and
+  EntitlementManager.VIRTUALIZATION_PLATFORM_ENTITLED and their usages
+- Remove Virtualization Platform test from EntitlementManagerTest
+- Remove Virtualization Platform from Server and ServerTest
+- api: Remove Virtualization Platform from SystemHandler, remove Virtualization
+  Platform and Virtualization exclusivity check, adjust the test
+- api(doc): Remove Virtualization Platform from ServerSerializer
+- api: Remove Virtualization Platform from OrgHandlerTest
+- api(doc): Remove Virtualization Platform from OrgHandler
+- api: Remove Virtualization Platform from ActivationKeyHandlerTest
+- api(doc): Remove Virtualization Platform from documentation of
+  ActivationKeyHandler
+- api: Remove checking for Virtualization Platform and Virtualization
+  entitlements exclusivity from the API validation
+- Remove Virtualization Platform from SystemManagerTest, cleaned up unused
+  methods.
+- Remove handling Virtualization Platform when entitling a server in
+  SystemManager
+- Remove unused methods from tests
+- Remove checking for Virtualization Platform when checking and updating server
+  entitlements in SystemDetailsEditAction
+- Remove Virtualization Platform from Overview -> Subscription Management ->
+  System Entitlements view
+- Remove Virtualization Platform from Admin -> Organizations view
+- translation strings: remove unused non-linux entitlement string
+- java: remove update entitlement references from test code
+- Org: remove unused fake update org entitlement
+- SearchAction: don't check for update org entitlement
+- EntitlementManager: remove references to update entitlements
+- translation strings: remove unused references
+- translation strings: remove reference to update entitlements
+- SystemDetailsEditAction: don't show update entitlement counts
+- SystemDetailsEditAction: don't filter update entitlements
+- ServerConstants: remove unused method getServerGroupTypeUpdateEntitled
+- System entitlements page: don't handle update entitlements
+- SystemEntitlementsAction: don't check for update entitlements
+- SystemHandler: update entitlement removed from documentation
+- ServerSerializer: update entitlement removed from documentation
+- java: more unused imports removed
+- java: fix checkstyle warnings
+- Task_queries: remove provisioning entitlement
+- EnableListAction: don't show provisioning entitlement
+- Unused translation strings removed
+- navigation menus: remove rhn_provisioning ACL checks
+- jsps: remove rhn_provisioning ACL checks
+- struts-config.xml: removed all rhn_provisioning references
+- PackageAclHandler: fix javadoc
+- OrgFactory: remove unused method
+- BaseHandler: remove unused method
+- Drop provisioning entitlement code from Java test classes
+- SystemDetailsEditAction: don't expect provisioning parameter
+- ConfigList actions: don't require provisioning entitlement
+- CustomValueSetAction: don't require provisioning for custom data setting
+- SystemManager: don't require provisioning in rollback to tag
+- ActivationKeyManager: don't handle special provisioning entitlement case
+- ServerConstants: getServerGroupTypeProvisioningEntitled dropped
+- ProvisioningEntitlement: dropped
+- EntitlementManager: don't expect provisioning entitlement
+- EnableConfigHelper: don't add provisioning entitlement
+- ActionManager: don't require provisioning entitlement to run scripts
+- SystemEntitlementsSubmitAction: don't expect provisioning entitlement in form
+  data
+- ProvisioningRemoteCommand: don't require provisioning for remote command
+- BaseSystemPackagesConfirmAction: don't require provisioning for rollback
+- KickstartScheduleCommand: avoid adding provisioning entitlement to activation
+  key
+- ActivationKeyDetailsAction: remove provisioning entitlement check
+- SystemHandler: drop provisioning entitlement checks
+- SystemHandler: drop provisioning entitlement from documentation
+- OrgHandler: drop provisioning entitlement from documentation
+- ActivationKeyHandler: drop provisioning entitlement checks
+- ActivationKeyHandler: drop provisioning entitlement from documentation
+- ServerSerializer: remove provisioning entitlement documentation
+- Drop Activation Key checks on config file deployments on provisioning
+  entitlement
+- ActivationKeyAclHandler: drop
+- Activation Key page: remove check on provisioning entitlement
+- System Details page: don't show provisioning entitlement
+- ProxyHandler: require enterprise entitlement instead of provisioning
+- System Entitlement Counts page: removal of the provisioning entitlement
+- Allow system tagging actions even without the provisioning entitlement in UI
+- Allow power management actions even without the provisioning entitlement in
+  UI
+- Drop provisioning-related Python tests
+- Unused translation strings removed: monitoring entitlement
+- Remove references to rhn_config_macro from Java code
+- Remove 'monitoring_entitled' from Python tests
+- refactor: Rename monitoring package
+- branding: remove unused css classes and their dead references
+- java: ServerFactoryTest imports organized
+- java: context references to removed page removed
+- Unused translation removed
+- Unused translation removed
+- java: remove unused constant and import
+- java: remove unused class SnapshotRollbackException
+- java: context references to removed page removed
+- Unused translation removed
+- Unused translation removed
+- java: remove HostAndGuestCountView and related methods
+- Unused translation removed
+- java: fixed context in StringResource
+- Unused translation removed
+- Unused translation removed
+- Unused translation removed
+- java: remove ChannelFamilySystem
+- Unused translation removed
+- java: remove ChannelFamilySystemGroup
+- java python tests: remove tests for dropped API setSoftwareEntitlements
+- java: remove example script which uses obsolete satellite.listEntitlements
+  API
+- java python tests: remove tests for dropped APIs
+- java: remove MultiOrgEntitlementsDto
+- Unused translation removed
+- java: remove page from authentication service whitelist
+- Unused translation removed
+- java: remove SoftwareEntitlementDto
+- Unused translation removed
+- java: remove SoftwareEntitlement StringResources
+- java: remove unused members from ChannelOverview
+- java: remove OrgChannelFamily
+- java: remove OrgChannelFamilySerializer
+- java: remove ChannelOverviewSerializer
+- java: remove is_fve from system_channel_subscriptions query
+- VirtualInstanceFactory: imports organized
+- java: remove maxMembers, currentMembers, maxFlex and currentFlex from
+  PrivateChannelFamily
+- java: removed unused package_search query files
+- java: modify insert_family_perms - not set members explicitly
+- java: remove unused methods listFlexGuests and runFlexGuestsQuery
+- java: remove channel_entitlement and channel_entitlement_for_all_orgs queries
+- SnapshotHandler: imports organized
+- SatelliteHandlerTest: imports organized
+- SatelliteHandler: imports organized
+- SnapshotRollbackAction: imports organized
+- java: remove handling for channel_family_no_subscriptions exception
+- java: remove entitlements() and getEntitlement() from ChannelManager
+- java: change ChannelFamily product URL
+- java: remove ChannelFamilyTree page
+- java XMLRPC: remove listEntitlements from SatelliteHandler
+- remove current_members and available_members from rhnAvailableChannels view
+- ChannelManagerTest: imports organized
+- SsmManager: imports organized
+- ChannelManager: imports organized
+- ChildChannelDto: checkstyle fixes
+- ChildChannelConfirmAction: checkstyle fixes
+- java: remove SystemManager.isServerIdFveEligible()
+- java: remove ChannelManager.isChannelFreeForSubscription()
+- java: remove all getAvailableFveEntitlements() methods and
+  ChannelEntitlementCounter
+- java: remove getAvailableEntitlements() methods
+- java: remove SsmManager.verifyChildEntitlements()
+- java: remove SystemManager.canServerSubscribeToChannel()
+- java: cleanup ChildChanneDto; remove available(Fve)Subscriptions and
+  isFreeForGuest
+- java XMLRPC: remove ChannelSoftwareHandler.availableEntitlements()
+- java: remove OrgSoftwareEntitlementDto
+- java: remove unused assign_software_entitlements query
+- java: remove unused VirtualInstanceFactory.listEligibleFlexGuests() method
+- java: remove unused UpdateOrgSoftwareEntitlementsCommand and test
+- java: SystemHandler imports organized
+- java: remove unused VirtualizationEntitlementsManager class and tests
+- java: remove GuetsLimitedHosts StringResources
+- java: remove GuestLimitedHosts page
+- java: remove GuestUnlimitedHosts StringResources
+- java: remove GuestUnlimitedHosts page
+- java: update NavTest not to rely on removed page
+- java: remove PhysicalHosts StringResources
+- java: remove PhysicalHosts page
+- java: remove unused methods VirtEntManager listFlexGuests,
+  listEligibleFlexGuests
+- java: remove unused convertToFlex method
+- java XMLRPC: remove SystemHandler.listEligibleFlexGuests()
+- java XMLRPC: remove SystemHandler.listFlexGuests()
+- java XMLRPC: remove SystemHandler.convertToFlexEntitlement()
+- java: remove softwareentitlements from StringResource
+- java: remove SoftwareEntitlements from PxtAuth
+- java: remove an unused SoftwareEntitlementSubscriptions StringResource
+- java: remove SoftwareEntitlementSubscriptions from PxtAuth
+- java: remove unused SystemManager.getEntitledSystems() method
+- java: remove link to dropped software entitlemet page
+- java: remove software Entitlements pages
+- java: remove EntitledSystems StringResources
+- java: remove EntitledSystems page
+- java: remove EligibleFlexGuests StringResources
+- java: remove EligibleFlexGuests page
+- java: remove FlexGuest from StringResources
+- java: remove FlexGuest page
+- OrgHandlerTest: imports organized
+- ChannelManager: imports organized
+- OrgHandler: imports organized
+- java: remove unused software entitlement backend methods
+- java XMLRPC: remove SoftwareEntitlement functions
+- java: remove OrgSoftwareSubscription StringResources
+- java: remove OrgSoftwareSubscriptions page
+- java: remove SoftwareEntitlements page
+- java: remove SoftwareEntitlementDetails StringResources
+- java: remove SoftwareEntitlementDetails page
+- java: remove softwareEntitlementSubscriptions StringResources
+- java: remove SoftwareEntitlementSubscriptions page
+- Revert "added ability to filter out only synchronised channels when adding
+  entitlements to org in multi org satellite"
+
+* Thu Nov 19 2015 Jan Dobes 2.5.14-1
+- BugFix: remove inconsistency and make more general the action description for
+  package page title and tab-title in Schedule
+
+* Thu Nov 19 2015 Jan Dobes 2.5.13-1
+- better log than nothing
+- Use non-immediate errata cache rebuilding on channel unsubscription
+
+* Tue Nov 17 2015 Grant Gainey 2.5.12-1
+- 1282855 - publishToChannel optimization
+- 1282838 - Fix extremely slow channel.software.syncErrata API
+- Fix typo and remove from whitelist
+
+* Mon Nov 02 2015 Tomas Lestach <tlestach@redhat.com> 2.5.11-1
+- removing unused code
+
+* Fri Oct 30 2015 Tomas Kasparek <tkasparek@redhat.com> 2.5.10-1
+- use xmlrpc_visible_to_user instead of visible_to_user query for searchByName
+
+* Thu Oct 29 2015 Jiri Dostal <jdostal@redhat.com> 2.5.9-1
+- added ability to filter out only synchronised channels when adding
+  entitlements to org in multi org satellite
+
+* Mon Oct 26 2015 Jan Dobes 2.5.8-1
+- 1257281 - optimize queries
+
+* Fri Oct 23 2015 Tomas Lestach <tlestach@redhat.com> 2.5.7-1
+- 1154548 - allowing RHEL7 kickstart repositories
+
+* Thu Oct 22 2015 Jan Dobes 2.5.6-1
+- adding useful comment
+
+* Wed Oct 21 2015 Jan Dobes 2.5.5-1
+- support listing errata by last_modified date
+
+* Thu Oct 15 2015 Tomas Lestach <tlestach@redhat.com> 2.5.4-1
+- Make the betaMarker string accessors private
+- rename ChannelProduct#beta to ChannelProduct#betaMarker
+
+* Tue Oct 13 2015 Tomas Kasparek <tkasparek@redhat.com> 2.5.3-1
+- extend session lifetime after API call
+- removing @Override annotations for methods that aren't overriden
+
+* Mon Oct 05 2015 Grant Gainey 2.5.2-1
+- 608355 - change token-gen to use random UUID rather than a guessable salt
+
+* Mon Oct 05 2015 Jan Dobes 2.5.1-1
+- 1199214 - split only on first occurrence of '='
+- Bumping package versions for 2.5.
+
+* Thu Sep 24 2015 Jan Dobes 2.4.78-1
+- Bumping copyright year.
+
+* Thu Sep 24 2015 Jan Dobes 2.4.77-1
+- support more frontend languages
+- Merging updated frontend translations from Zanata.
+
+* Mon Sep 21 2015 Grant Gainey 2.4.76-1
+- 1253793 - Fix ks-snippets-view and catalin.out view under IE8
+
+* Fri Sep 18 2015 Jan Dobes 2.4.75-1
+- update api version
+
+* Thu Sep 17 2015 Jan Dobes 2.4.74-1
+- Make pagination attributes more consistent by putting them into enum
+- Unify paging parameter values
+- Remove unused pagination parameters checking
+
+* Thu Sep 17 2015 Jan Dobes 2.4.73-1
+- removing orphan_packages_for_channel query
+
+* Wed Sep 16 2015 Grant Gainey 2.4.72-1
+- 608355 - updated user-creation email template
+
+* Wed Sep 16 2015 Grant Gainey 2.4.71-1
+- 608355 - More checkstyle happiness
+- 608355 - Fix some Junit
+- 608355 - checkstyle
+- 608355 - Refactor reset-pwd path to not log user in until pwd-chg accepted
+- 608355 - Add min-password-length to user_attribute_sizes.jspf
+- 608355 - Teach ResetPasswordFactory about errors
+- 608355 - Make validatePassword into its own method in UserEditActionHelper
+- 608355 - First draft, UI workflow
+- 608355 - teach model about isExpired
+- 608355 - ResetPassword domain-model/mode-queries/access/Junit
+
+* Wed Sep 16 2015 Jan Dobes 2.4.70-1
+- 1250351 - kickstartable trees should not be cacheable
+
+* Mon Sep 14 2015 Jan Dobes 2.4.69-1
+- removing old-styled icon from
+  /rhn/systems/details/virtualization/ProvisionVirtualizationWizard
+- show virtual machine status instead of name
+
+* Thu Sep 10 2015 Jan Dobes 2.4.68-1
+- render the right icon in system details header
+
+* Wed Sep 09 2015 Jan Dobes 2.4.67-1
+- displaying the content once is enough
+- 1205818 - fixing NullPointerException
+
+* Wed Sep 09 2015 Jiri Dostal <jdostal@redhat.com> 2.4.66-1
+- 1181152 - WebUI -> Admin -> Users XSS
+
+* Tue Sep 08 2015 Jan Dobes 2.4.65-1
+- 1040871 - remove not existing system name reference
+
+* Mon Sep 07 2015 Jan Dobes 2.4.64-1
+- allow to use action chaining as SSM equivalent can
+
+* Mon Sep 07 2015 Jan Dobes 2.4.63-1
+- 1259445 - do not overwrite selected date and time
+
+* Thu Sep 03 2015 Jan Dobes 2.4.62-1
+- add missing string
+
+* Thu Sep 03 2015 Jan Dobes 2.4.61-1
+- 1252166 - removing duplicate setting
+- 1252166 - fixing texts and links on system event page
+
+* Wed Sep 02 2015 Jan Dobes 2.4.60-1
+- removing redundant space
+
+* Thu Aug 27 2015 Jan Dobes 2.4.59-1
+- 1000415 - add icon for compliance status
+- 1000415 - show diff icon in separate column
+- 1000415 - change icon for empty diff
+- making confirm page readable
+- Organization users page: fix typo
+
+* Wed Aug 26 2015 Jan Dobes 2.4.58-1
+- correct message
+- this is not a toolbar
+- shift this menu to right
+- vim version tags removed
+- java unit tests: fixes after 1229427
+- ChannelSoftwareHandler documentation: checksum is required now
+
+* Thu Aug 20 2015 Jan Dobes 2.4.57-1
+- 1229427 - support checksum change when cloning as in WebUI
+- 1229427 - channels without checksum are no longer supported
+- bump year in all languages
+
+* Wed Aug 19 2015 Jan Dobes 2.4.56-1
+- removing duplicate button
+- bump year
+
+* Wed Aug 19 2015 Jan Dobes 2.4.55-1
+- 1250067 - unschedule actions only on single system
+
+* Mon Aug 17 2015 Jan Dobes 2.4.54-1
+- 1252166 - remove results of rescheduled remote script actions immediately
+
+* Fri Aug 14 2015 Grant Gainey 2.4.53-1
+- 1253793 - Fixing IE8 display issues  * Add respond.js/html5-shim for IE8  *
+  Block editarea.js, which breaks respond.js under IE8, from    executing under
+  IE8
+
+* Fri Aug 14 2015 Tomas Lestach <tlestach@redhat.com> 2.4.52-1
+- 1253495 - Improve configchannel.channelExists API efficiency
+
+* Fri Aug 14 2015 Tomas Lestach <tlestach@redhat.com> 2.4.51-1
+- 1228589 - need to query rhnOrgDistChannelMap that is per organization
+- 1228589 - prevent NullPointerException when chaning base channels via SSM
+
+* Wed Aug 12 2015 Jan Dobes 2.4.50-1
+- 1252166 - simplify logic
+- 1252166 - delete status of previous action run
+- 1252166 - check if failed only this server action
+- 1252166 - reschedule only relevant server action
+
+* Tue Aug 11 2015 Jiri Dostal <jdostal@redhat.com> 2.4.49-1
+- [RFE] 1167999 - Osa ping for API, check sendOsaPing/getOsaPing methods
+
+* Fri Aug 07 2015 Tomas Kasparek <tkasparek@redhat.com> 2.4.48-1
+- reremove unsused SetDecl
+- don't cleanup set when adding packages to a channel
+
+* Tue Aug 04 2015 Jiri Dostal <jdostal@redhat.com> 2.4.47-1
+- 1241945 - Fixed - search field only allows 40 characters
+
+* Tue Aug 04 2015 Jiri Dostal <jdostal@redhat.com> 2.4.46-1
+- [RFE] 1097634 - Added option to schedule sync with latest packages
+
+* Mon Aug 03 2015 Tomas Lestach <tlestach@redhat.com> 2.4.45-1
+- 1219140 - skip errata clone events, where channel or erratum aren't available
+  anymore (were deleted in the meantime)
+- 1219140 - let errata.cloneAsync process the cloning process async
+
+* Fri Jul 31 2015 Tomas Lestach <tlestach@redhat.com> 2.4.44-1
+- 1179479 - add last boot and registration date to
+  systemgroup.listSystemsMinimal API
+
+* Fri Jul 31 2015 Tomas Lestach <tlestach@redhat.com> 2.4.43-1
+- detect removed packages during repo generation
+- sort the channels for rego generation task
+- set the policy for blocked execution (concurrent settings)
+- unmark channel in progress for failed repomd tasks
+- mark ChannelRepodataWorker failed, when exception is thrown
+- removing unused loadErrata() from ErrataQueueWorker
+- modified will be set by the rhnRepoRegenQueue update trigger
+
+* Fri Jul 24 2015 Jan Dobes 2.4.42-1
+- adding link to reposync logs
+- adding progress bar showing sync status
+- disable sync button and show message if reposync is in progress
+- Sort api list
+- Remove test handler from API
+
+* Fri Jul 24 2015 Tomas Kasparek <tkasparek@redhat.com> 2.4.41-1
+- require cobbler20 - Spacewalk is not working with upstream cobbler anyway
+
+* Wed Jul 22 2015 Jiri Dostal <jdostal@redhat.com> 2.4.40-1
+- 1181152 - XSS when altering user details and going somewhere where you are
+  choosing user         - Escaped tags in real names
+- Make RhnServletListenerTest not extend RhnBaseTestCase
+
+* Tue Jul 21 2015 Tomas Lestach <tlestach@redhat.com> 2.4.39-1
+- introduce org.setErrataEmailNotifsForOrg and org.isErrataEmailNotifsForOrg
+  API calls
+
+* Mon Jul 20 2015 Tomas Lestach <tlestach@redhat.com> 2.4.38-1
+- introduce org.setOrgConfigManagedByOrgAdmin and
+  org.isOrgConfigManagedByOrgAdmin API calls
+
+* Mon Jul 20 2015 Tomas Lestach <tlestach@redhat.com> 2.4.37-1
+- update organization configuration description
+- spacewalk/satellite admin may allow org admin to manage org configuration
+- re-use same org config jsp code
+- introduce errata_emails_enabled per org
+- make the Organization Configuration pages available also to org amin
+- Fix docs
+
+* Wed Jul 15 2015 Jan Dobes 2.4.36-1
+- prevent ISE if taskomatic is not running
+- get files only for correct channel
+
+* Tue Jul 14 2015 Tomas Kasparek <tkasparek@redhat.com> 2.4.35-1
+- allow to change 1st organization name
+
+* Mon Jul 13 2015 Jan Dobes 2.4.34-1
+- properly close 'a' tag
+- removing dead code
+- do not try to translate certain messages several times
+
+* Mon Jul 13 2015 Matej Kollar <mkollar@redhat.com> 2.4.33-1
+- Grammar fix
+
+* Fri Jul 10 2015 Tomas Lestach <tlestach@redhat.com> 2.4.32-1
+- 1235955 - fix detection of systems requiring reboot
+
+* Thu Jul 09 2015 Jiri Dostal <jdostal@redhat.com> 2.4.31-1
+- Bug 1098804 - fixed broken link, labels
+
+* Thu Jul 09 2015 Tomas Lestach <tlestach@redhat.com> 2.4.30-1
+- log debug messages only if debug is enabled
+- Fix queue size: consider possible remainders from last run
+- Log message when finished errata cache for a server or channel
+- Remove some duplicated empty lines
+- Remove unused return value that was always null
+- Remove unused parameter to TaskQueue.run()
+- Log the current queue size before every job run (DEBUG)
+- Fix log message when finished with server
+
+* Fri Jul 03 2015 Jan Dobes 2.4.29-1
+- removing dead code
+- fixing system.listUngroupedSystems API
+
+* Fri Jul 03 2015 Jan Dobes 2.4.28-1
+- removing obsolete file
+- configure ivy resolver
+
+* Fri Jul 03 2015 Matej Kollar <mkollar@redhat.com> 2.4.27-1
+- Unify profile creation/update with one submit button instead of two.
+- Fix file input control alignment issue with form-control (bsc#873203)
+
+* Mon Jun 29 2015 Jan Dobes 2.4.26-1
+- checksum type None is no longer available
+- Make arch x86_64 the default when creating new channels.
+- Remove checksum type None. It prevents metadata generation.
+- do not recreate the option tags, just change visibility
+- New Channel: Fix setting the default architecture/checksum when selecting
+  back Parent: None
+
+* Fri Jun 26 2015 Tomas Kasparek <tkasparek@redhat.com> 2.4.25-1
+- Avoid deadlock in CompareConfigFilesTask when a
+  rhn_channel.update_needed_cache is in progress
+- Server.listConfigDiffEnabledSystems: fix indentation
+- Recommend cobbler20 with all packages requiring cobbler on Fedora 22
+
+* Fri Jun 12 2015 Jan Dobes 2.4.24-1
+- 1227700 - add missing country code
+- 1227700 - removing invalid title
+- TaskoXmlRpcHandler: dead code removed
+
+* Tue Jun 09 2015 Tomas Kasparek <tkasparek@redhat.com> 2.4.23-1
+- Fix adding roles: make sure that ORG admin is last
+- Fix javadoc and remove some superfluous newlines
+- Simplify getCandidates() to return a list of task objects
+- Remove unused Date variable
+- Do not remove tasks from DB during getCandidates() (bsc#932052)
+- Verify forward path and query ignoring the order of parameters
+
+* Fri May 29 2015 Jan Dobes 2.4.22-1
+- Get rid of IE7 compatibility mode enforcement
+- ErrataManager: fix stack update case
+- fixing message
+- removing unused import
+- KickstartScheduleCommand: always use activation key data
+- KickstartScheduleCommand: dead code removed
+
+* Thu May 28 2015 Tomas Kasparek <tkasparek@redhat.com> 2.4.21-1
+- remove redundant abstract modifier
+- fix checkstyle issues on Fedora 22
+- ErrataManagerTest: correct assertion message
+
 * Fri May 22 2015 Tomas Lestach <tlestach@redhat.com> 2.4.20-1
 - expect a Number instead of an Integer
 

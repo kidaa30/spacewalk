@@ -2,7 +2,7 @@ Name: spacewalk-certs-tools
 Summary: Spacewalk SSL Key/Cert Tool
 Group: Applications/Internet
 License: GPLv2
-Version: 2.4.2
+Version: 2.5.0
 Release: 1%{?dist}
 URL:      https://fedorahosted.org/spacewalk 
 Source0:  https://fedorahosted.org/releases/s/p/spacewalk/%{name}-%{version}.tar.gz
@@ -51,6 +51,7 @@ rm -rf $RPM_BUILD_ROOT
 %{rhnroot}/certs/*.py*
 %attr(755,root,root) %{rhnroot}/certs/sign.sh
 %attr(755,root,root) %{rhnroot}/certs/gen-rpm.sh
+%attr(755,root,root) %{rhnroot}/certs/update-ca-cert-trust.sh
 %attr(755,root,root) %{_bindir}/rhn-sudo-ssl-tool
 %attr(755,root,root) %{_bindir}/rhn-ssl-tool
 %attr(755,root,root) %{_bindir}/rhn-bootstrap
@@ -60,6 +61,21 @@ rm -rf $RPM_BUILD_ROOT
 %{_var}/www/html/pub/bootstrap/client_config_update.py*
 
 %changelog
+* Thu Sep 24 2015 Jan Dobes 2.4.7-1
+- Bumping copyright year.
+
+* Fri Aug 07 2015 Jan Dobes 2.4.6-1
+- add file to RPM
+
+* Fri Aug 07 2015 Jan Dobes 2.4.5-1
+- add file to RPM
+
+* Thu Aug 06 2015 Jan Dobes 2.4.4-1
+- trust CA certificate when client RPM is installed
+
+* Tue Jul 14 2015 Tomas Kasparek <tkasparek@redhat.com> 2.4.3-1
+- remove Except KeyboardInterrupt from imports
+
 * Fri May 08 2015 Stephen Herr <sherr@redhat.com> 2.4.2-1
 - 1219946 - We need python-hashlib for doing sha256 on RHEL 5
 - 1219946 - Make rhn-ssl-tool use sha256 by default for crt / csr signatures

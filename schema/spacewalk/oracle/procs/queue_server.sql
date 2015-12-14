@@ -1,5 +1,5 @@
 --
--- Copyright (c) 2008--2013 Red Hat, Inc.
+-- Copyright (c) 2008--2015 Red Hat, Inc.
 --
 -- This software is licensed to you under the GNU General Public License,
 -- version 2 (GPLv2). There is NO WARRANTY for this software, express or
@@ -34,22 +34,17 @@ BEGIN
 	  INSERT
             INTO rhnTaskQueue
                  (org_id, task_name, task_data)
-          VALUES (org_id_tmp, 
-                  'update_server_errata_cache',
-                  server_id_in);
+          SELECT org_id_tmp, 
+                 'update_server_errata_cache',
+                 server_id_in
+          FROM DUAL
+          WHERE NOT EXISTS
+            (SELECT 1 FROM rhnTaskQueue
+               WHERE org_id = org_id_tmp
+               AND task_name = 'update_server_errata_cache'
+               AND task_data = server_id_in
+            );
     END IF;
 END queue_server;
 /
 SHOW ERRORS
-
---
--- Revision 1.8  2004/11/09 18:16:21  pjones
--- bugzilla: none -- make this faster by using the table the second time.
---
--- Revision 1.7  2004/07/13 21:29:35  pjones
--- bugzilla: 125938 -- make queue_server handle new EP table, too
---
--- Revision 1.6  2002/05/13 22:53:38  pjones
--- cvs id/log
--- some (note enough) readability fixes
---

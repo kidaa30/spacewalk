@@ -113,17 +113,28 @@ def getCustomChannels():
 
     return l_custom_ch
 
+def latest_packages(packages):
+    #allows to download only latest packages
+    packages.sort(reverse=True)
+    seen = set()
+    latest = []
+    for pack in packages:
+        if pack.getNRA() not in seen:
+            latest.append(pack)
+            seen.add(pack.getNRA())
+    return latest
 
 class RepoSync(object):
 
     def __init__(self, channel_label, repo_type, url=None, fail=False,
-                 quiet=False, filters=None, no_errata=False, sync_kickstart=False):
+                 quiet=False, filters=None, no_errata=False, sync_kickstart=False, latest=False):
         self.regen = False
         self.fail = fail
         self.quiet = quiet
         self.filters = filters or []
         self.no_errata = no_errata
         self.sync_kickstart = sync_kickstart
+        self.latest = latest
 
         initCFG('server')
         rhnSQL.initDB()
@@ -463,6 +474,8 @@ class RepoSync(object):
             filters = self.filters
 
         packages = plug.list_packages(filters)
+        if self.latest:
+            packages = latest_packages(packages)
         to_process = []
         num_passed = len(packages)
         self.print_msg("Packages in repo:             %5d" % plug.num_packages)
@@ -685,6 +698,9 @@ class RepoSync(object):
         return ret
 
     def import_kickstart(self, plug, url, repo_label):
+        ks_tree_label = re.sub(r'[^-_0-9A-Za-z@.]', '', repo_label.replace(' ', '_'))
+        if len(ks_tree_label) < 4:
+            ks_tree_label += "_repo"
         pxeboot_path = 'images/pxeboot/'
         pxeboot = plug.get_file(pxeboot_path)
         if pxeboot is None:
@@ -697,15 +713,15 @@ class RepoSync(object):
                 select id
                 from rhnKickstartableTree
                 where org_id = :org_id and channel_id = :channel_id and label = :label
-                """, org_id=self.channel['org_id'], channel_id=self.channel['id'], label=repo_label):
-            print "Kickstartable tree %s already synced." % repo_label
+                """, org_id=self.channel['org_id'], channel_id=self.channel['id'], label=ks_tree_label):
+            print "Kickstartable tree %s already synced." % ks_tree_label
             return
 
         row = rhnSQL.fetchone_dict("""
             select sequence_nextval('rhn_kstree_id_seq') as id from dual
             """)
         ks_id = row['id']
-        ks_path = 'rhn/kickstart/%s/%s' % (self.channel['org_id'], repo_label)
+        ks_path = 'rhn/kickstart/%s/%s' % (self.channel['org_id'], ks_tree_label)
 
         row = rhnSQL.execute("""
             insert into rhnKickstartableTree (id, org_id, label, base_path, channel_id,
@@ -714,7 +730,7 @@ class RepoSync(object):
                         ( select id from rhnKSTreeType where label = 'externally-managed'),
                         ( select id from rhnKSInstallType where label = 'generic_rpm'),
                         current_timestamp, current_timestamp, current_timestamp)
-            """, id=ks_id, org_id=self.channel['org_id'], label=repo_label,
+            """, id=ks_id, org_id=self.channel['org_id'], label=ks_tree_label,
                              base_path=os.path.join(CFG.MOUNT_POINT, ks_path), channel_id=self.channel['id'])
 
         insert_h = rhnSQL.prepare("""

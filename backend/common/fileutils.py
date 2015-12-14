@@ -81,16 +81,16 @@ def rotateFile(filepath, depth=5, suffix='.', verbosity=0):
     """
 
     # check argument sanity (should really be down outside of this function)
-    if not filepath or type(filepath) != type(''):
+    if not filepath or not isinstance(filepath, type('')):
         raise ValueError("filepath '%s' is not a valid arguement" % filepath)
-    if type(depth) != type(0) or depth < -1 \
+    if not isinstance(depth, type(0)) or depth < -1 \
             or depth > sys.maxint - 1 or depth == 0:
         raise ValueError("depth must fall within range "
                          "[-1, 1...%s]" % (sys.maxint - 1))
 
     # force verbosity to be a numeric value
     verbosity = verbosity or 0
-    if type(verbosity) != type(0) or verbosity < -1 \
+    if not isinstance(verbosity, type(0)) or verbosity < -1 \
             or verbosity > sys.maxint - 1:
         raise ValueError('invalid verbosity value: %s' % (verbosity))
 
@@ -165,7 +165,7 @@ def rhn_popen(cmd, progressCallback=None, bufferSize=16384, outputLog=None):
         outputLog --> optional log file file object write method
     """
 
-    cmd_is_list = type(cmd) in (types.ListType, types.TupleType)
+    cmd_is_list = isinstance(cmd, (types.ListType, types.TupleType))
     if cmd_is_list:
         cmd = map(str, cmd)
     # pylint: disable=E1101
@@ -479,9 +479,16 @@ def decompress_open(filename, mode='r'):
     elif filename.endswith('.bz2'):
         file_obj = bz2.BZ2File(filename, mode)
     elif filename.endswith('.xz'):
-        # pylint: disable=F0401
-        import lzma
-        file_obj = lzma.LZMAFile(filename, mode)
+        try:
+            # pylint: disable=F0401
+            import lzma
+            file_obj = lzma.LZMAFile(filename, mode)
+        except ImportError: # No LZMA lib - be sad
+            # xz uncompresses foo.xml.xz to foo.xml
+            # uncompress, keep both, return uncompressed file
+            subprocess.call(['xz', '-d', '-k', filename])
+            uncompressed_path = filename.rsplit('.', 1)[0]
+            file_obj = open(uncompressed_path, mode)
     else:
         file_obj = open(filename, mode)
     return file_obj

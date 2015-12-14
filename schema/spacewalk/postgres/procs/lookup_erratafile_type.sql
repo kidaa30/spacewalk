@@ -1,7 +1,7 @@
--- oracle equivalent source sha1 2f13cfeb37e0ce59f7bb58b3154f1963658fa2a6
+-- oracle equivalent source sha1 4aa954576f81fc49de965cf0e8e05f303948884b
 -- retrieved from ./1241042199/53fa26df463811901487b608eecc3f77ca7783a1/schema/spacewalk/oracle/procs/lookup_erratafile_type.sql
 --
--- Copyright (c) 2008--2012 Red Hat, Inc.
+-- Copyright (c) 2008--2015 Red Hat, Inc.
 --
 -- This software is licensed to you under the GNU General Public License,
 -- version 2 (GPLv2). There is NO WARRANTY for this software, express or

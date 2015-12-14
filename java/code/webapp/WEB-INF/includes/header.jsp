@@ -42,14 +42,12 @@
           <rhn:submitted />
           <div class="form-group">
             <select name="search_type" class="form-control input-sm">
-              <rhn:require acl="org_entitlement(sw_mgr_enterprise)">
-                <option value="systems"><bean:message key="header.jsp.systems" /></option>
-              </rhn:require>
+              <option value="systems"><bean:message key="header.jsp.systems" /></option>
               <option value="packages"><bean:message key="header.jsp.packages" /></option>
               <option value="errata"><bean:message key="header.jsp.errata" /></option>
               <option value="docs"><bean:message key="header.jsp.documentation" /></option>
             </select>
-            <input type="search" class="form-control input-sm" name="search_string" maxlength="40" size="20" accesskey="4" autofocus="autofocus" placeholder="<bean:message key='button.search'/>" />
+            <input type="search" class="form-control input-sm" name="search_string" size="20" accesskey="4" autofocus="autofocus" placeholder="<bean:message key='button.search'/>" />
             <button type="submit" class="btn btn-primary input-sm" id="search-btn">
               <rhn:icon type="header-search" />
             </button>

@@ -1,5 +1,5 @@
 --
--- Copyright (c) 2008 Red Hat, Inc.
+-- Copyright (c) 2008--2015 Red Hat, Inc.
 --
 -- This software is licensed to you under the GNU General Public License,
 -- version 2 (GPLv2). There is NO WARRANTY for this software, express or
@@ -38,13 +38,3 @@ EXCEPTION
 END;
 /
 SHOW ERRORS
-
---
--- Revision 1.2  2004/02/20 18:08:51  pjones
--- bugzilla: none -- make lookup_*_arch.sql not autonomous since they never
--- insert
--- add changes files for nonlinux systems
---
--- Revision 1.1  2002/11/13 23:16:18  pjones
--- lookup_*_arch()
---

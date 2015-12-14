@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2009--2014 Red Hat, Inc.
+ * Copyright (c) 2009--2015 Red Hat, Inc.
  *
  * This software is licensed to you under the GNU General Public License,
  * version 2 (GPLv2). There is NO WARRANTY for this software, express or
@@ -713,13 +713,9 @@ public class ConfigChannelHandler extends BaseHandler {
      */
     public int channelExists(User loggedInUser, String channelLabel) {
         ConfigurationManager manager = ConfigurationManager.getInstance();
-        DataResult<ConfigChannelDto> list = manager.
-                                    listGlobalChannels(loggedInUser, null);
-
-        for (ConfigChannelDto channel : list) {
-            if (channel.getLabel().equals(channelLabel)) {
-                return 1;
-            }
+        if (manager.isDuplicated(channelLabel, ConfigChannelType.global(),
+                loggedInUser.getOrg())) {
+            return 1;
         }
         return 0;
     }

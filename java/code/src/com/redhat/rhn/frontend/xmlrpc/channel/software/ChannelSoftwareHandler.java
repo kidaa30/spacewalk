@@ -14,6 +14,20 @@
  */
 package com.redhat.rhn.frontend.xmlrpc.channel.software;
 
+import java.sql.Timestamp;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
+import org.apache.commons.lang.BooleanUtils;
+import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang.time.StopWatch;
+import org.apache.log4j.Logger;
+
 import com.redhat.rhn.FaultException;
 import com.redhat.rhn.common.client.InvalidCertificateException;
 import com.redhat.rhn.common.db.datasource.DataResult;
@@ -29,9 +43,9 @@ import com.redhat.rhn.domain.channel.ChannelFactory;
 import com.redhat.rhn.domain.channel.ContentSource;
 import com.redhat.rhn.domain.channel.ContentSourceFilter;
 import com.redhat.rhn.domain.channel.InvalidChannelRoleException;
-import com.redhat.rhn.domain.errata.impl.PublishedClonedErrata;
 import com.redhat.rhn.domain.errata.Errata;
 import com.redhat.rhn.domain.errata.ErrataFactory;
+import com.redhat.rhn.domain.errata.impl.PublishedClonedErrata;
 import com.redhat.rhn.domain.org.Org;
 import com.redhat.rhn.domain.rhnpackage.Package;
 import com.redhat.rhn.domain.rhnpackage.PackageFactory;
@@ -42,7 +56,6 @@ import com.redhat.rhn.domain.server.ServerFactory;
 import com.redhat.rhn.domain.user.User;
 import com.redhat.rhn.frontend.dto.ErrataOverview;
 import com.redhat.rhn.frontend.dto.PackageDto;
-import com.redhat.rhn.frontend.dto.PackageOverview;
 import com.redhat.rhn.frontend.events.UpdateErrataCacheEvent;
 import com.redhat.rhn.frontend.xmlrpc.BaseHandler;
 import com.redhat.rhn.frontend.xmlrpc.DuplicateChannelLabelException;
@@ -76,20 +89,6 @@ import com.redhat.rhn.manager.user.UserManager;
 import com.redhat.rhn.taskomatic.TaskomaticApi;
 import com.redhat.rhn.taskomatic.task.TaskConstants;
 import com.redhat.rhn.taskomatic.task.errata.ErrataCacheWorker;
-
-import org.apache.commons.lang.BooleanUtils;
-import org.apache.commons.lang.StringUtils;
-import org.apache.commons.lang.time.StopWatch;
-import org.apache.log4j.Logger;
-
-import java.sql.Timestamp;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
 /**
  * ChannelSoftwareHandler
@@ -168,19 +167,11 @@ public class ChannelSoftwareHandler extends BaseHandler {
             throw new PermissionCheckFailureException();
         }
 
-        List<ErrataOverview> errata = ChannelManager.listErrataNeedingResync(channel,
+        List<Long> eids = ChannelManager.listErrataIdsNeedingResync(channel,
                 loggedInUser);
-        List<Long> eids = new ArrayList<Long>();
-        for (ErrataOverview e : errata) {
-            eids.add(e.getId());
-        }
 
-        List<PackageOverview> packages = ChannelManager
-                .listErrataPackagesForResync(channel, loggedInUser);
-        List<Long> pids = new ArrayList<Long>();
-        for (PackageOverview p : packages) {
-            pids.add(p.getId());
-        }
+        List<Long> pids = ChannelManager
+                .listErrataPackageIdsForResync(channel, loggedInUser);
 
         ChannelEditor.getInstance().addPackages(loggedInUser, channel, pids);
 
@@ -528,6 +519,9 @@ public class ChannelSoftwareHandler extends BaseHandler {
         catch (InvalidChannelRoleException e) {
             throw new PermissionCheckFailureException(e);
         }
+        catch (PermissionException e) {
+            throw new FaultException(1234, "permissions", e.getMessage(), new String[] {});
+        }
 
         return 1;
     }
@@ -684,29 +678,6 @@ public class ChannelSoftwareHandler extends BaseHandler {
         return 1;
     }
 
-
-    /**
-     * Returns the number of available subscriptions for the given channel
-     * @param loggedInUser The current user
-     * @param channelLabel Label of channel whose details are sought.
-     * @return the number of available subscriptions for the given channel
-     * @throws NoSuchChannelException thrown if no channel is found.
-     *
-     * @xmlrpc.doc Returns the number of available subscriptions for the given channel
-     * @xmlrpc.param #session_key()
-     * @xmlrpc.param #param_desc("string", "channelLabel", "channel to query")
-     * @xmlrpc.returntype int number of available subscriptions for the given channel
-     */
-    public int availableEntitlements(User loggedInUser, String channelLabel)
-        throws NoSuchChannelException {
-
-        Channel c = lookupChannelByLabel(loggedInUser, channelLabel);
-        Long cnt = ChannelManager.getAvailableEntitlements(loggedInUser.getOrg(), c);
-        if (cnt == null) {
-            return 0;
-        }
-        return cnt.intValue();
-    }
 
     /**
      * Creates a software channel, parent_channel_label can be empty string
@@ -1524,12 +1495,7 @@ public class ChannelSoftwareHandler extends BaseHandler {
      */
     public List<ErrataOverview> listErrata(User loggedInUser, String channelLabel,
             Date startDate) throws NoSuchChannelException {
-        Channel channel = lookupChannelByLabel(loggedInUser, channelLabel);
-
-        DataResult<ErrataOverview> dr = ChannelManager.listErrata(channel, startDate, null,
-                loggedInUser);
-        dr.elaborate();
-        return dr;
+        return listErrata(loggedInUser, channelLabel, startDate, null);
     }
 
     /**
@@ -1555,18 +1521,46 @@ public class ChannelSoftwareHandler extends BaseHandler {
 
     public List<ErrataOverview> listErrata(User loggedInUser, String channelLabel,
             Date startDate, Date endDate) throws NoSuchChannelException {
+        return listErrata(loggedInUser, channelLabel, startDate, endDate, false);
+    }
+
+    /**
+     * List the errata applicable to a channel between startDate and endDate.
+     * Allow to select errata by last modified date.
+     * Support behaviour available in old versions. (needed for Dumper)
+     * @param loggedInUser The current user
+     * @param channelLabel The label for the channel
+     * @param startDate begin date
+     * @param endDate end date
+     * @param lastModified select by last modified timestamp or not
+     * @return the errata applicable to a channel
+     * @throws NoSuchChannelException thrown if there is no channel matching
+     * channelLabel.
+     *
+     * @xmlrpc.doc List the errata applicable to a channel between startDate and endDate.
+     * @xmlrpc.param #session_key()
+     * @xmlrpc.param #param_desc("string", "channelLabel", "channel to query")
+     * @xmlrpc.param #param($date, "startDate")
+     * @xmlrpc.param #param($date, "endDate")
+     * @xmlrpc.param #param_desc("boolean", "lastModified",
+     *     "select by last modified or not")
+     * @xmlrpc.returntype
+     *      #array()
+     *          $ErrataOverviewSerializer
+     *      #array_end()
+     */
+
+    public List<ErrataOverview> listErrata(User loggedInUser,
+            String channelLabel, Date startDate, Date endDate,
+            boolean lastModified) throws NoSuchChannelException {
 
         Channel channel = lookupChannelByLabel(loggedInUser, channelLabel);
 
         DataResult<ErrataOverview> errata = ChannelManager.listErrata(channel, startDate,
-                endDate,
-                loggedInUser);
+                endDate, lastModified, loggedInUser);
         errata.elaborate();
         return errata;
     }
-
-
-
 
     /**
      * List the errata applicable to a channel
@@ -1917,6 +1911,7 @@ public class ChannelSoftwareHandler extends BaseHandler {
      *          #prop_desc("string", "gpg_key_fp", "(optional),
      *              gpg_fingerprint might be used as well")
      *          #prop_desc("string", "description", "(optional)")
+     *          #prop_desc("string", "checksum", "either sha1 or sha256")
      *      #struct_end()
      * @xmlrpc.param #param("boolean", "original_state")
      * @xmlrpc.returntype int the cloned channel ID
@@ -1938,6 +1933,7 @@ public class ChannelSoftwareHandler extends BaseHandler {
         validKeys.add("gpg_key_id");
         validKeys.add("gpg_key_fp");
         validKeys.add("description");
+        validKeys.add("checksum");
         validateMap(validKeys, channelDetails);
 
         channelAdminPermCheck(loggedInUser);
@@ -1948,6 +1944,7 @@ public class ChannelSoftwareHandler extends BaseHandler {
         String archLabel = channelDetails.get("arch_label");
         String summary = channelDetails.get("summary");
         String description = channelDetails.get("description");
+        String checksum = channelDetails.get("checksum");
 
         if (ChannelFactory.lookupByLabel(loggedInUser.getOrg(), label) != null) {
             throw new DuplicateChannelLabelException(label);
@@ -1965,6 +1962,10 @@ public class ChannelSoftwareHandler extends BaseHandler {
         }
         else {
             arch = originalChan.getChannelArch();
+        }
+
+        if (checksum == null) {
+            checksum = originalChan.getChecksumTypeLabel();
         }
 
         String gpgUrl, gpgId, gpgFingerprint;
@@ -2015,6 +2016,7 @@ public class ChannelSoftwareHandler extends BaseHandler {
         }
         helper.setUser(loggedInUser);
         helper.setSummary(summary);
+        helper.setChecksumLabel(checksum);
 
         Channel clone = helper.create();
         return clone.getId().intValue();

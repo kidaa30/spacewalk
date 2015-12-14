@@ -9,7 +9,7 @@
 %endif
 
 Name:       spacewalk-branding
-Version:    2.4.2
+Version:    2.5.1
 Release:    1%{?dist}
 Summary:    Spacewalk branding data
 
@@ -39,6 +39,15 @@ Requires:      select2-bootstrap-css
 %description
 Spacewalk specific branding, CSS, and images.
 
+%package devel
+Requires:       %{name} = %{version}-%{release}
+Summary:        Spacewalk LESS source files for development use
+Group:          Applications/Internet
+
+%description devel
+This package contains LESS source files corresponding to Spacewalk's
+CSS files.
+
 %prep
 %setup -q
 
@@ -61,7 +70,7 @@ install -d -m 755 %{buildroot}%{_datadir}/rhn/lib/
 install -d -m 755 %{buildroot}%{_var}/lib/%{tomcat}/webapps/rhn/WEB-INF/lib/
 install -d -m 755 %{buildroot}/%{_sysconfdir}/rhn
 install -d -m 755 %{buildroot}/%{_prefix}/share/rhn/config-defaults
-cp -p css/spacewalk.css %{buildroot}/%{_var}/www/html/css
+cp -pR css/* %{buildroot}/%{_var}/www/html/css
 cp -pR fonts %{buildroot}/%{_var}/www/html/
 cp -pR img %{buildroot}/%{_var}/www/html/
 # Appplication expects two favicon's for some reason, copy it so there's just
@@ -79,7 +88,7 @@ rm -rf %{buildroot}
 
 %files
 %dir %{_var}/www/html/css
-%{_var}/www/html/css/*
+%{_var}/www/html/css/*.css
 %dir %{_var}/www/html/fonts
 %{_var}/www/html/fonts/*
 %dir /%{_var}/www/html/img
@@ -91,7 +100,30 @@ rm -rf %{buildroot}
 %{_prefix}/share/rhn/config-defaults/rhn_docs.conf
 %doc LICENSE
 
+%files devel
+%defattr(-,root,root)
+%{_var}/www/html/css/*.less
+
 %changelog
+* Tue Nov 24 2015 Jan Dobes 2.5.1-1
+- Remove unused load_satellite_certificate function and satellite-cert-file
+  parameter
+- branding: remove unused css classes and their dead references
+- Bumping package versions for 2.5.
+
+* Thu Sep 24 2015 Jan Dobes 2.4.6-1
+- deleting language images
+
+* Wed Aug 26 2015 Jan Dobes 2.4.5-1
+- fixing floating problem
+
+* Fri Jul 03 2015 Matej Kollar <mkollar@redhat.com> 2.4.4-1
+- Fix file input control alignment issue with form-control (bsc#873203)
+
+* Fri Jun 05 2015 Tomas Kasparek <tkasparek@redhat.com> 2.4.3-1
+- Add a spacewalk-branding-devel package to install LESS files for development
+  use
+
 * Wed May 20 2015 Tomas Kasparek <tkasparek@redhat.com> 2.4.2-1
 - Rebuild package due to BZ#1223240
 

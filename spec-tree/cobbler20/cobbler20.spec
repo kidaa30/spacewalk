@@ -7,7 +7,7 @@ Name: cobbler20
 License: GPLv2+
 AutoReq: no
 Version: 2.0.11
-Release: 45%{?dist}
+Release: 55%{?dist}
 Source0: cobbler-%{version}.tar.gz
 Source1: cobblerd.service
 Patch0: catch_cheetah_exception.patch
@@ -28,11 +28,16 @@ Patch14: centos7-version.patch
 Patch15: unicode-scripts.patch
 Patch16: cobbler-bz1214458.patch
 Patch17: whitelist.patch
+Patch18: disable_https.patch
+Patch19: buildiso-boot-options.patch
+Patch20: buildiso-no-local-hdd.patch
+Patch21: cobbler-s390-kernel-options.patch
 Group: Applications/System
 Requires: python >= 2.3
 
 Provides: cobbler = %{version}-%{release}
 Obsoletes: cobbler <= %{version}-%{release}
+Conflicts: cobbler-epel
 
 %if 0%{?suse_version} >= 1000
 Requires: apache2
@@ -129,6 +134,10 @@ a XMLRPC API for integration with other applications.
 %patch15 -p1
 %patch16 -p1
 %patch17 -p1
+%patch18 -p1
+%patch19 -p1
+%patch20 -p1
+%patch21 -p1
 
 %build
 %{__python} setup.py build 
@@ -478,6 +487,37 @@ Web interface for Cobbler that allows visiting http://server/cobbler_web to conf
 %doc AUTHORS COPYING CHANGELOG README
 
 %changelog
+* Wed Nov 04 2015 Tomas Kasparek <tkasparek@redhat.com> 2.0.11-55
+- add system support to --no-local-hdd option without need of profiles
+
+* Mon Oct 05 2015 Tomas Kasparek <tkasparek@redhat.com> 2.0.11-54
+- timeout to 1st available profile with --no-local-hdd instead of local hdd
+
+* Mon Oct 05 2015 Tomas Kasparek <tkasparek@redhat.com> 2.0.11-53
+- 
+
+* Wed Sep 02 2015 Jan Dobes 2.0.11-52
+- 1199214 - removing kernel options for s390 systems
+
+* Tue Sep 01 2015 Tomas Kasparek <tkasparek@redhat.com> 2.0.11-51
+- add option to skip local harddrive as buildiso entry
+
+* Wed Jun 17 2015 Jan Dobes 2.0.11-50
+- 1095198 - fixing multiple nameserver boot options on rhel7 and fedora
+
+* Thu Jun 11 2015 Jan Dobes 2.0.11-49
+- fix adding netmask kernel parameter into isolinux.cfg
+
+* Wed Jun 10 2015 Tomas Kasparek <tkasparek@redhat.com> 2.0.11-48
+- fix paths for disable_https patch
+
+* Wed Jun 10 2015 Tomas Kasparek <tkasparek@redhat.com> 2.0.11-47
+- cobbler20 needs to conflict with cobbler-epel - DNF is too smart
+- include disable_https.patch in cobbler20 spec
+
+* Tue Jun 09 2015 Tomas Kasparek <tkasparek@redhat.com> 2.0.11-46
+- disable https comunication with spacewalk
+
 * Mon May 11 2015 Jan Dobes 2.0.11-45
 - enabling patch
 - adding keyword also into config file

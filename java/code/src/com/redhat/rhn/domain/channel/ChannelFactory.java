@@ -61,6 +61,7 @@ public class ChannelFactory extends HibernateFactory {
      * Get the Logger for the derived class so log messages
      * show up on the correct class
      */
+    @Override
     protected Logger getLogger() {
         return log;
     }
@@ -504,52 +505,6 @@ public class ChannelFactory extends HibernateFactory {
     }
 
     /**
-     * Returns available entitlements for the org and the given channel.
-     * @param org Org (used <b>only</b> when channel's org is NULL)
-     * @param c Channel
-     * @return available entitlements for the org and the given channel.
-     */
-    public static Long getAvailableEntitlements(Org org, Channel c) {
-        //
-        // The channel's org is used when not NULL to support
-        // shared channels.
-        //
-        Org channelOrg = c.getOrg();
-        if (channelOrg != null) {
-            org = channelOrg;
-        }
-        Map<String, Object> params = new HashMap<String, Object>();
-        params.put("channel_id", c.getId());
-        params.put("org_id", org.getId());
-        return (Long) singleton.lookupObjectByNamedQuery(
-                "Channel.availableEntitlements", params);
-
-    }
-
-    /**
-     * Returns available flex entitlements for the org and the given channel.
-     * @param org Org (used <b>only</b> when channel's org is NULL)
-     * @param c Channel
-     * @return available flex entitlements for the org and the given channel.
-     */
-    public static Long getAvailableFveEntitlements(Org org, Channel c) {
-        //
-        // The channel's org is used when not NULL to support
-        // shared channels.
-        //
-        Org channelOrg = c.getOrg();
-        if (channelOrg != null) {
-            org = channelOrg;
-        }
-        Map<String, Object> params = new HashMap<String, Object>();
-        params.put("channel_id", c.getId());
-        params.put("org_id", org.getId());
-        return (Long) singleton.lookupObjectByNamedQuery(
-                "Channel.availableFveEntitlements", params);
-
-    }
-
-    /**
      * Creates an empty Channel
      * @return empty Channel
      */
@@ -861,19 +816,20 @@ public class ChannelFactory extends HibernateFactory {
     /**
      * Lookup the dist channel map for the given product name, release, and channel arch.
      * Returns null if none is found.
-     *
+     * @param org organization
      * @param productName Product name.
      * @param release Version.
      * @param channelArch Channel arch.
      * @return DistChannelMap, null if none is found
      */
     public static DistChannelMap lookupDistChannelMapByPnReleaseArch(
-                        String productName, String release, ChannelArch channelArch) {
+            Org org, String productName, String release, ChannelArch channelArch) {
 
         Map<String, Object> params = new HashMap<String, Object>();
-        params.put("productName", productName);
+        params.put("for_org_id", org.getId());
+        params.put("product_name", productName);
         params.put("release", release);
-        params.put("channelArch", channelArch);
+        params.put("channel_arch_id", channelArch.getId());
         return (DistChannelMap)singleton.lookupObjectByNamedQuery(
                 "DistChannelMap.findByProductNameReleaseAndChannelArch", params);
     }

@@ -442,7 +442,8 @@ public class ActionManager extends BaseManager {
             //which depend on the server as well.
             addConfigurationRevisionsToAction(user, revisions, a, server);
         }
-        if (a.getServerActions().size() < 1) {
+        Set<ServerAction> sa = a.getServerActions();
+        if ((sa == null) || (sa.isEmpty())) {
             return null;
         }
         ActionFactory.save(a);
@@ -1199,9 +1200,9 @@ public class ActionManager extends BaseManager {
                 throw new MissingCapabilityException("script.run", sid);
             }
 
-            if (!SystemManager.hasEntitlement(sid, EntitlementManager.PROVISIONING)) {
+            if (!SystemManager.hasEntitlement(sid, EntitlementManager.MANAGEMENT)) {
                 throw new MissingEntitlementException(
-                    EntitlementManager.PROVISIONING.getHumanReadableLabel());
+                    EntitlementManager.MANAGEMENT.getHumanReadableLabel());
             }
         }
     }
@@ -1601,7 +1602,7 @@ public class ActionManager extends BaseManager {
             name = "Package Removal";
         }
         else if (type.equals(ActionFactory.TYPE_PACKAGES_UPDATE)) {
-            name = "Package Install";
+            name = "Package Install/Upgrade";
         }
         else if (type.equals(ActionFactory.TYPE_PACKAGES_VERIFY)) {
             name = "Package Verify";

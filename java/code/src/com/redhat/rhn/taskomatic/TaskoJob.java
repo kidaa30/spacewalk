@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2010--2012 Red Hat, Inc.
+ * Copyright (c) 2010--2015 Red Hat, Inc.
  *
  * This software is licensed to you under the GNU General Public License,
  * version 2 (GPLv2). There is NO WARRANTY for this software, express or
@@ -17,6 +17,7 @@ package com.redhat.rhn.taskomatic;
 import com.redhat.rhn.common.conf.Config;
 import com.redhat.rhn.common.hibernate.HibernateFactory;
 import com.redhat.rhn.taskomatic.task.RhnJob;
+import com.redhat.rhn.taskomatic.task.RhnQueueJob;
 import com.redhat.rhn.taskomatic.task.TaskHelper;
 
 import org.apache.log4j.Logger;
@@ -62,12 +63,26 @@ public class TaskoJob implements Job {
 
     private boolean isTaskSingleThreaded(TaskoTask task) {
         try {
-            Class.forName(task.getTaskClass()).newInstance();
+            return Class.forName(task.getTaskClass()).newInstance() instanceof RhnQueueJob;
         }
-        catch (Exception e) {
+        catch (InstantiationException e) {
+            // will be caught later
+            log.error("Error trying to instance a new class of " +
+                    task.getTaskClass() + ": " + e.getMessage());
             return false;
         }
-        return true;
+        catch (IllegalAccessException e) {
+            // will be caught later
+            log.error("Error trying to instance a new class of " +
+                    task.getTaskClass() + ": " + e.getMessage());
+            return false;
+        }
+        catch (ClassNotFoundException e) {
+            // will be caught later
+            log.error("Error trying to instance a new class of " +
+                    task.getTaskClass() + ": " + e.getMessage());
+            return false;
+        }
     }
 
     private boolean isTaskRunning(TaskoTask task) {

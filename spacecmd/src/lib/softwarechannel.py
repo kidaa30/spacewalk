@@ -38,34 +38,7 @@ import xmlrpclib
 ARCH_LABELS = ['ia32', 'ia64', 'x86_64', 'ppc',
                'i386-sun-solaris', 'sparc-sun-solaris']
 
-
-def help_softwarechannel_getentitlements(self):
-    print 'softwarechannel_getentitlements: List the available ' + \
-          'entitlements for a software channel'
-    print 'usage: softwarechannel_getentitlements CHANNEL'
-
-
-def complete_softwarechannel_getentitlements(self, text, line, beg, end):
-    return tab_completer(self.do_softwarechannel_list('', True), text)
-
-
-def do_softwarechannel_getentitlements(self, args):
-    (args, _options) = parse_arguments(args)
-
-    if not len(args):
-        self.help_softwarechannel_getentitlements()
-        return
-
-    channel = args[0]
-
-    entitlements = \
-        self.client.channel.software.availableEntitlements(self.session,
-                                                           channel)
-
-    print entitlements
-
-####################
-
+CHECKSUM = ['sha1', 'sha256', 'sha384', 'sha512']
 
 def help_softwarechannel_list(self):
     print 'softwarechannel_list: List all available software channels'
@@ -316,7 +289,7 @@ def do_softwarechannel_listlatestpackages(self, args, doreturn=False):
     (args, _options) = parse_arguments(args)
 
     if not len(args):
-        self.help_softwarechannel_listallpackages()
+        self.help_softwarechannel_listlatestpackages()
         return
 
     channel = args[0]
@@ -536,10 +509,10 @@ options:
   -p PARENT_CHANNEL
   -a ARCHITECTURE ['ia32', 'ia64', 'x86_64', 'ppc',
                   'i386-sun-solaris', 'sparc-sun-solaris']
-  -c CHECKSUM ['sha1', 'sha256']
+  -c CHECKSUM %s
   -u GPG_URL
   -i GPG_ID
-  -f GPG_FINGERPRINT'''
+  -f GPG_FINGERPRINT''' % CHECKSUM
 
 
 def do_softwarechannel_create(self, args):
@@ -607,8 +580,7 @@ def do_softwarechannel_create(self, args):
             return
 
         if not options.arch:
-            logging.error('An architecture is required')
-            return
+            options.arch = 'x86_64'
 
         if not options.checksum:
             options.checksum = 'sha256'
@@ -640,7 +612,8 @@ def do_softwarechannel_create(self, args):
                                             options.name,
                                             options.name,  # summary
                                             'channel-%s' % options.arch,
-                                            options.parent_channel)
+                                            options.parent_channel,
+                                            options.checksum)
 ####################
 
 
@@ -1525,7 +1498,7 @@ def help_softwarechannel_regenerateneededcache(self):
     print 'softwarechannel_regenerateneededcache: '
     print 'Regenerate the needed errata and package cache for all systems'
     print
-    print 'usage: softwarechannel_regnerateneededcache'
+    print 'usage: softwarechannel_regenerateneededcache'
 
 
 def do_softwarechannel_regenerateneededcache(self, args):
@@ -1539,7 +1512,7 @@ def help_softwarechannel_regenerateyumcache(self):
     print 'softwarechannel_regenerateyumcache: '
     print 'Regenerate the YUM cache for a software channel'
     print
-    print 'usage: softwarechannel_regnerateyumcache <CHANNEL ...>'
+    print 'usage: softwarechannel_regenerateyumcache <CHANNEL ...>'
 
 
 def complete_softwarechannel_regenerateyumcache(self, text, line, beg, end):
@@ -2023,6 +1996,40 @@ def do_softwarechannel_removesyncschedule(self, args):
 
 ####################
 
+def help_softwarechannel_listsyncschedule(self):
+    print 'softwarechannel_listsyncschedule: List sync schedules for all software channels'
+    print 'usage:'
+    print 'softwarechannel_listsyncschedule : List all channels'
+
+
+def do_softwarechannel_listsyncschedule(self, args):
+
+    # Get a list of all channels and sync schedules
+    channels = self.client.channel.listAllChannels(self.session)
+    schedules = self.client.taskomatic.org.listActiveSchedules(self.session)
+
+    chan_name = {}
+    chan_sched = {}
+
+    # Build an array of channel names indexed by internal channel id number
+    for c in channels:
+        chan_name[ c['id'] ] = c['label']
+        chan_sched[ c['id'] ] = ''
+
+    # Build an array of schedules indexed by internal channel id number
+    for s in schedules:
+        chan_sched[int(s['data_map']['channel_id'])] = s['cron_expr']
+
+    # Print headers
+    csched_fmt = '{0:>5s}  {1:<40s} {2:<20s}'
+    print csched_fmt.format('key', 'Channel Name', 'Update Schedule')
+    print csched_fmt.format('-----', '---------------------', '---------------')
+
+    # Sort and print the channel names and associated repo-sync schedule (if any)
+    for key,value in sorted(chan_name.iteritems(), key=lambda (k,v): (v,k)):
+        print csched_fmt.format(str(key), value, chan_sched[int(key)])
+
+####################
 
 def help_softwarechannel_addrepo(self):
     print 'softwarechannel_addrepo: Add a repo to a software channel'

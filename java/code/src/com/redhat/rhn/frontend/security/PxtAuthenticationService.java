@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2009--2014 Red Hat, Inc.
+ * Copyright (c) 2009--2015 Red Hat, Inc.
  *
  * This software is licensed to you under the GNU General Public License,
  * version 2 (GPLv2). There is NO WARRANTY for this software, express or
@@ -41,7 +41,6 @@ public class PxtAuthenticationService extends BaseAuthenticationService {
     private static final Set UNPROTECTED_URIS;
     private static final Set POST_UNPROTECTED_URIS;
     private static final Set LOGIN_URIS;
-    private static final Set RESTRICTED_WHITELIST_URIS;
 
     static {
         TreeSet set = new TreeSet();
@@ -61,6 +60,9 @@ public class PxtAuthenticationService extends BaseAuthenticationService {
         set.add("/img");
         set.add("/favicon.ico");
         set.add("/rhn/common/DownloadFile");
+        // password-reset-link destination
+        set.add("/rhn/ResetLink");
+        set.add("/rhn/ResetPasswordSubmit");
 
         UNPROTECTED_URIS = UnmodifiableSet.decorate(set);
 
@@ -70,60 +72,6 @@ public class PxtAuthenticationService extends BaseAuthenticationService {
         set.add("/rhn/Search.do");
 
         POST_UNPROTECTED_URIS = UnmodifiableSet.decorate(set);
-
-        set = new TreeSet();
-        // login
-        set.add("/rhn/Login");
-        set.add("/rhn/ReLogin");
-        // base and add on entitlements
-        set.add("/rhn/systems/details/Edit.do");
-        set.add("/rhn/systems/SystemEntitlementsSubmit.do");
-        // system entitlements
-        set.add("/rhn/admin/multiorg/EntitlementOrgs.do");
-        set.add("/rhn/admin/multiorg/OrgSystemSubscriptions.do");
-        // software channel entitlements
-        set.add("/rhn/admin/multiorg/SoftwareEntitlements.do");
-        set.add("/rhn/admin/multiorg/SoftwareEntitlementSubscriptions.do");
-        set.add("/rhn/admin/multiorg/OrgSoftwareSubscriptions.do");
-        // satellite software channel entitlements
-        set.add("/rhn/channels/software/EntitlementsSubmit.do");
-        // delete system(s)
-        set.add("/rhn/systems/details/DeleteConfirm.do");
-        set.add("/rhn/systems/ssm/DeleteConfirm.do");
-        set.add("/rhn/systems/DuplicateIPList.do");
-        set.add("/rhn/systems/DuplicateIPv6List.do");
-        set.add("/rhn/systems/DuplicateHostName.do");
-        set.add("/rhn/systems/DuplicateMacAddress.do");
-        // migrate to another org
-        set.add("/rhn/admin/multiorg/OrgTrusts.do");
-        set.add("/rhn/systems/details/SystemMigrate.do");
-        set.add("/rhn/systems/ssm/MigrateSystems.do");
-        // change channel subscription
-        set.add("/rhn/systems/details/SystemChannels.do");
-        set.add("/rhn/channel/ssm/BaseChannelSubscribe.do");
-        set.add("/rhn/channel/ssm/ChildSubscriptions.do");
-        set.add("/rhn/channel/ssm/ChildSubscriptionsConfirm.do");
-        // change flex -> regular entitlemnts
-        set.add("/rhn/systems/entitlements/");
-        // upload certificate
-        set.add("/rhn/admin/config/CertificateConfig.do");
-        // select systems
-        set.add("/rhn/systems/Overview.do");
-        set.add("/rhn/systems/SystemList.do");
-        set.add("/rhn/systems/VirtualSystemsListSubmit.do");
-        set.add("/rhn/systems/OutOfDate.do");
-        set.add("/rhn/systems/RequiringReboot.do");
-        set.add("/rhn/systems/ExtraPackagesSystems.do");
-        set.add("/rhn/systems/Unentitled.do");
-        set.add("/rhn/systems/Ungrouped.do");
-        set.add("/rhn/systems/Inactive.do");
-        set.add("/rhn/systems/Registered.do");
-        set.add("/rhn/systems/ProxyList.do");
-        set.add("/rhn/systems/SystemCurrency.do");
-        // system search
-        set.add("/rhn/systems/Search.do");
-
-        RESTRICTED_WHITELIST_URIS = UnmodifiableSet.decorate(set);
     }
 
     private PxtSessionDelegate pxtDelegate;
@@ -131,20 +79,19 @@ public class PxtAuthenticationService extends BaseAuthenticationService {
     protected PxtAuthenticationService() {
     }
 
+    @Override
     protected Set getLoginURIs() {
         return LOGIN_URIS;
     }
 
+    @Override
     protected Set getUnprotectedURIs() {
         return UNPROTECTED_URIS;
     }
 
+    @Override
     protected Set getPostUnprotectedURIs() {
         return POST_UNPROTECTED_URIS;
-    }
-
-    protected Set getRestrictedWhitelistURIs() {
-        return RESTRICTED_WHITELIST_URIS;
     }
 
     /**
@@ -163,13 +110,6 @@ public class PxtAuthenticationService extends BaseAuthenticationService {
      */
     public boolean skipCsfr(HttpServletRequest request) {
         return requestURIdoesLogin(request) || requestPostCsfrWhitelist(request);
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public boolean postOnRestrictedWhitelist(HttpServletRequest request) {
-        return requestRestrictedWhitelist(request);
     }
 
     /**

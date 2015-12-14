@@ -11,7 +11,7 @@
 <body>
 <rhn:toolbar base="h1" icon="header-user" imgAlt="users.jsp.imgAlt"
  helpUrl=""
- creationUrl="/rhn/users/CreateUser.do?account_type=into_org"
+ creationUrl="/rhn/users/CreateUser.do"
  creationType="user">
   <bean:message key="activelist.jsp.title"/>
 </rhn:toolbar>
@@ -44,7 +44,7 @@
                    sortable="true"
                    headerkey="realname.displayname"
                    sortattr="userLastName">
-                <c:out value="${current.userLastName}, ${current.userFirstName}" />
+                <c:out escapeXml="true" value="${current.userLastName}, ${current.userFirstName}" />
         </rl:column>
 
         <!--  Roles column -->

@@ -37,8 +37,6 @@ import com.redhat.rhn.domain.action.virtualization.VirtualizationSetMemoryAction
 import com.redhat.rhn.domain.action.virtualization.VirtualizationSetVcpusAction;
 import com.redhat.rhn.domain.channel.Channel;
 import com.redhat.rhn.domain.channel.ChannelFactory;
-import com.redhat.rhn.domain.channel.ChannelFamily;
-import com.redhat.rhn.domain.channel.ChannelFamilyFactory;
 import com.redhat.rhn.domain.channel.NoBaseChannelFoundException;
 import com.redhat.rhn.domain.entitlement.Entitlement;
 import com.redhat.rhn.domain.errata.Errata;
@@ -61,9 +59,9 @@ import com.redhat.rhn.domain.server.Location;
 import com.redhat.rhn.domain.server.ManagedServerGroup;
 import com.redhat.rhn.domain.server.NetworkInterface;
 import com.redhat.rhn.domain.server.Note;
+import com.redhat.rhn.domain.server.PushClient;
 import com.redhat.rhn.domain.server.Server;
 import com.redhat.rhn.domain.server.ServerFactory;
-import com.redhat.rhn.domain.server.ServerGroupFactory;
 import com.redhat.rhn.domain.server.ServerSnapshot;
 import com.redhat.rhn.domain.server.SnapshotTag;
 import com.redhat.rhn.domain.server.VirtualInstance;
@@ -72,7 +70,6 @@ import com.redhat.rhn.domain.token.ActivationKey;
 import com.redhat.rhn.domain.token.ActivationKeyFactory;
 import com.redhat.rhn.domain.user.User;
 import com.redhat.rhn.frontend.dto.ActivationKeyDto;
-import com.redhat.rhn.frontend.dto.ChannelFamilySystemGroup;
 import com.redhat.rhn.frontend.dto.ErrataOverview;
 import com.redhat.rhn.frontend.dto.EssentialChannelDto;
 import com.redhat.rhn.frontend.dto.HistoryEvent;
@@ -100,7 +97,6 @@ import com.redhat.rhn.frontend.xmlrpc.NoSuchNetworkInterfaceException;
 import com.redhat.rhn.frontend.xmlrpc.NoSuchPackageException;
 import com.redhat.rhn.frontend.xmlrpc.NoSuchSnapshotTagException;
 import com.redhat.rhn.frontend.xmlrpc.NoSuchSystemException;
-import com.redhat.rhn.frontend.xmlrpc.NotEnoughEntitlementsException;
 import com.redhat.rhn.frontend.xmlrpc.PermissionCheckFailureException;
 import com.redhat.rhn.frontend.xmlrpc.ProfileNameTooLongException;
 import com.redhat.rhn.frontend.xmlrpc.ProfileNameTooShortException;
@@ -133,9 +129,7 @@ import com.redhat.rhn.manager.system.SystemManager;
 import com.redhat.rhn.manager.system.UpdateBaseChannelCommand;
 import com.redhat.rhn.manager.system.UpdateChildChannelsCommand;
 import com.redhat.rhn.manager.system.VirtualizationActionCommand;
-import com.redhat.rhn.manager.system.VirtualizationEntitlementsManager;
 import com.redhat.rhn.manager.token.ActivationKeyManager;
-import com.redhat.rhn.manager.user.UserManager;
 
 import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
@@ -163,18 +157,12 @@ import java.util.regex.Pattern;
 
 /**
  * SystemHandler
- * @version $Rev$
  * @xmlrpc.namespace system
  * @xmlrpc.doc Provides methods to access and modify registered system.
  */
 public class SystemHandler extends BaseHandler {
 
     private static Logger log = Logger.getLogger(SystemHandler.class);
-
-    @Override
-    protected boolean availableInRestrictedPeriod() {
-        return true;
-    }
 
     /**
      * Get a reactivation key for this server.
@@ -255,14 +243,12 @@ public class SystemHandler extends BaseHandler {
      *   - The logged in user cannot access the system
      *   - The entitlement cannot be found
      *   - The server cannot be entitled with the given entitlement
-     *   - There are no available slots for the entitlement.
      *
      * @xmlrpc.doc Adds an entitlement to a given server.
      * @xmlrpc.param #param("string", "sessionKey")
      * @xmlrpc.param #param("int", "serverId")
      * @xmlrpc.param #param_desc("string", "entitlementName", "One of:
-     *          'enterprise_entitled', 'provisioning_entitled',
-     *          'virtualization_host', or 'virtualization_host_platform'.")
+     *          'enterprise_entitled' or 'virtualization_host'.")
      * @xmlrpc.returntype #return_int_success()
      */
     public int upgradeEntitlement(User loggedInUser, Integer sid, String entitlementLevel)
@@ -278,12 +264,6 @@ public class SystemHandler extends BaseHandler {
         }
         if (!SystemManager.canEntitleServer(server, entitlement)) {
             throw new PermissionCheckFailureException();
-        }
-
-        long availableSlots = ServerGroupFactory
-                .lookupEntitled(entitlement, loggedInUser.getOrg()).getAvailableSlots();
-        if (availableSlots < 1) {
-            throw new NotEnoughEntitlementsException();
         }
 
         SystemManager.entitleServer(server, entitlement);
@@ -1706,17 +1686,6 @@ public class SystemHandler extends BaseHandler {
     }
 
     /**
-     * Private helper method to get a list of systems for a particular user
-     *   The query used is very inefficient.  Only use it when you need a lot
-     *   of information about the systems.
-     * @param user The user to lookup
-     * @return An array of SystemOverview objects representing a system
-     */
-    private List<SystemOverview> getUserSystemsList(User user) {
-        return  UserManager.visibleSystemsAsDto(user);
-    }
-
-    /**
      * Set custom values for the specified server.
      * @param loggedInUser The current user
      * @param sid The id of the server in question
@@ -2389,9 +2358,9 @@ public class SystemHandler extends BaseHandler {
 
         // Lookup the server so we can validate it exists and throw error if not.
         Server server = lookupServer(loggedInUser, serverId);
-        if (!(server.hasEntitlement(EntitlementManager.PROVISIONING))) {
+        if (!(server.hasEntitlement(EntitlementManager.MANAGEMENT))) {
             throw new FaultException(-2, "provisionError",
-                    "System does not have provisioning entitlement");
+                    "System does not have management entitlement");
         }
 
         KickstartData ksdata = KickstartFactory.
@@ -2442,9 +2411,9 @@ public class SystemHandler extends BaseHandler {
 
         // Lookup the server so we can validate it exists and throw error if not.
         Server server = lookupServer(loggedInUser, serverId);
-        if (!(server.hasEntitlement(EntitlementManager.PROVISIONING))) {
+        if (!(server.hasEntitlement(EntitlementManager.MANAGEMENT))) {
             throw new FaultException(-2, "provisionError",
-                    "System does not have provisioning entitlement");
+                    "System cannot be provisioned");
         }
 
         KickstartData ksdata = KickstartFactory.
@@ -2701,7 +2670,7 @@ public class SystemHandler extends BaseHandler {
      *
      */
     public List<SystemOverview> searchByName(User loggedInUser, String regexp) {
-        List<SystemOverview>  systems =  getUserSystemsList(loggedInUser);
+        List<SystemOverview> systems =  SystemManager.systemListShort(loggedInUser, null);
         List<SystemOverview> returnList = new ArrayList<SystemOverview>();
 
         Pattern pattern = Pattern.compile(regexp, Pattern.CASE_INSENSITIVE);
@@ -3660,7 +3629,7 @@ public class SystemHandler extends BaseHandler {
      *      #struct("server details")
      *          #prop_desc("string", "profile_name", "System's profile name")
      *          #prop_desc("string", "base_entitlement", "System's base entitlement label.
-     *                      (enterprise_entitled or sw_mgr_entitled)")
+     *                      (enterprise_entitled or unentitle)")
      *           #prop_desc("boolean", "auto_errata_update", "True if system has
      *                          auto errata updates enabled")
      *           #prop_desc("string", "description", "System description")
@@ -3848,8 +3817,7 @@ public class SystemHandler extends BaseHandler {
      * @xmlrpc.param #param("string", "sessionKey")
      * @xmlrpc.param #param("int", "serverId")
      * @xmlrpc.param #array_single("string", "entitlementLabel - one of following:
-     * provisioning_entitled, virtualization_host,
-     * virtualization_host_platform, enterprise_entitled")
+     * virtualization_host, enterprise_entitled")
      * @xmlrpc.returntype #return_int_success()
      */
     public int addEntitlements(User loggedInUser, Integer serverId,
@@ -3865,19 +3833,6 @@ public class SystemHandler extends BaseHandler {
         }
 
         validateEntitlements(entitlements);
-
-        // Check that we're not adding virt or virt platform to a system that already has
-        // the other:
-        if (server.hasEntitlement(EntitlementManager.VIRTUALIZATION) &&
-                entitlements.contains(
-                        EntitlementManager.VIRTUALIZATION_PLATFORM_ENTITLED)) {
-            throw new InvalidEntitlementException();
-        }
-        if (server.hasEntitlement(EntitlementManager.VIRTUALIZATION_PLATFORM) &&
-                entitlements.contains(
-                        EntitlementManager.VIRTUALIZATION_ENTITLED)) {
-            throw new InvalidEntitlementException();
-        }
 
         List<String> addOnEnts = new LinkedList<String>(entitlements);
         // first process base entitlements
@@ -4049,8 +4004,12 @@ public class SystemHandler extends BaseHandler {
                         if (header == null) {
                             header = line.split(",");
                             for (int i = 0; i < header.length; i++) {
-                                if (header[i].equals(csvUuid)) { uuidPos = i; }
-                                if (header[i].equals(csvSystemId)) { systemIdPos = i; }
+                                if (header[i].equals(csvUuid)) {
+                                    uuidPos = i;
+                                }
+                                if (header[i].equals(csvSystemId)) {
+                                    systemIdPos = i;
+                                }
                             }
                             if (uuidPos == null || systemIdPos == null) {
                                 log.warn("Unexpected format of mapping file " +
@@ -4351,22 +4310,11 @@ public class SystemHandler extends BaseHandler {
      * @xmlrpc.param #param("string", "sessionKey")
      * @xmlrpc.returntype
      *      #array()
-     *      #struct("system")
-     *          #prop_desc("int", "id", "server id")
-     *          #prop("string", "name")
-     *          #prop("dateTime.iso8601", "last_checkin", "Last time server successfully
-     *                      checked in.")
-     *      #struct_end()
+     *          $SystemOverviewSerializer
      *      #array_end()
      */
-    public Object[] listUngroupedSystems(User loggedInUser) {
-        List <Server> servers = ServerFactory.listUngroupedSystems(loggedInUser);
-        List<Map<String, Object>> serverMaps = new ArrayList<Map<String, Object>>();
-        XmlRpcSystemHelper helper = XmlRpcSystemHelper.getInstance();
-        for (Server server : servers) {
-            serverMaps.add(helper.format(server));
-        }
-        return serverMaps.toArray();
+    public List<SystemOverview> listUngroupedSystems(User loggedInUser) {
+        return SystemManager.ungroupedList(loggedInUser, null);
     }
 
 
@@ -4895,9 +4843,9 @@ public class SystemHandler extends BaseHandler {
             throw new NoSuchSystemException();
         }
 
-        if (!(server.hasEntitlement(EntitlementManager.PROVISIONING))) {
+        if (!(server.hasEntitlement(EntitlementManager.MANAGEMENT))) {
             throw new FaultException(-2, "provisionError",
-                    "System does not have provisioning entitlement");
+                    "System cannot be provisioned");
         }
 
         KickstartData ksData = lookupKsData(ksLabel, loggedInUser.getOrg());
@@ -4948,9 +4896,9 @@ public class SystemHandler extends BaseHandler {
             throw new NoSuchSystemException();
         }
 
-        if (!(server.hasEntitlement(EntitlementManager.PROVISIONING))) {
+        if (!(server.hasEntitlement(EntitlementManager.MANAGEMENT))) {
             throw new FaultException(-2, "provisionError",
-                    "System does not have provisioning entitlement");
+                    "System cannot be provisioned");
         }
 
         SystemRecord rec = SystemRecord.lookupById(
@@ -5009,9 +4957,9 @@ public class SystemHandler extends BaseHandler {
             throw new NoSuchSystemException();
         }
 
-        if (!(server.hasEntitlement(EntitlementManager.PROVISIONING))) {
+        if (!(server.hasEntitlement(EntitlementManager.MANAGEMENT))) {
             throw new FaultException(-2, "provisionError",
-                    "System does not have provisioning entitlement");
+                    "System cannot be provisioned");
         }
 
         SystemRecord rec = SystemRecord.lookupById(
@@ -5110,75 +5058,6 @@ public class SystemHandler extends BaseHandler {
         List<DuplicateSystemGrouping> list =
                 SystemManager.listDuplicatesByHostname(loggedInUser, 0L);
         return transformDuplicate(list, "hostname");
-    }
-
-
-    /**
-     * List flex guests accessible to the user
-     * @param loggedInUser The current user
-     * @return List of Flex guests
-     *
-     *
-     * @xmlrpc.doc  List flex guests accessible to the user
-     * @xmlrpc.param #param("string", "sessionKey")
-     * @xmlrpc.returntype
-     *          #array()
-     *              $ChannelFamilySystemGroupSerializer
-     *          #array_end()
-     **/
-    public List<ChannelFamilySystemGroup> listFlexGuests(User loggedInUser) {
-        return VirtualizationEntitlementsManager.getInstance().listFlexGuests(loggedInUser);
-    }
-
-    /**
-     * List eligible flex guests accessible to the user
-     * @param loggedInUser The current user
-     * @return List of Flex guests
-     *
-     *
-     * @xmlrpc.doc  List eligible flex guests accessible to the user
-     * @xmlrpc.param #param("string", "sessionKey")
-     * @xmlrpc.returntype
-     *          #array()
-     *              $ChannelFamilySystemGroupSerializer
-     *          #array_end()
-     **/
-    public List<ChannelFamilySystemGroup> listEligibleFlexGuests(
-            User loggedInUser) {
-        return VirtualizationEntitlementsManager.
-                getInstance().listEligibleFlexGuests(loggedInUser);
-    }
-
-    /**
-     * Converts the given list of systems to use the flex entitlement.
-     * @param loggedInUser The current user
-     * @param serverIds list of server ids whom
-     *      you want to get converted to flex entitlement
-     * @param channelFamilyLabel the channel family label of the channel
-     * @return the total the number of systems that were converted to use flex entitlement.
-     *
-     * @xmlrpc.doc Converts the given list of systems for a given channel family
-     *   to use the flex entitlement.
-     * @xmlrpc.param #param("string", "sessionKey")
-     * @xmlrpc.param #array_single("int", "serverId")
-     * @xmlrpc.param #param("string", "channelFamilyLabel")
-     * @xmlrpc.returntype int - the total the number of systems
-     *                  that were converted to use flex entitlement.
-     */
-    public int convertToFlexEntitlement(User loggedInUser,
-            List<Integer> serverIds, String channelFamilyLabel) {
-        ChannelFamily cf = ChannelFamilyFactory.lookupByLabel(
-                channelFamilyLabel, loggedInUser.getOrg());
-        if (cf == null) {
-            throw new InvalidEntitlementException();
-        }
-        // we need long values to pass
-        List<Long> longServerIds = new ArrayList<Long>();
-        for (Iterator<Integer> it = serverIds.iterator(); it.hasNext();) {
-            longServerIds.add(new Long(it.next()));
-        }
-        return VirtualizationEntitlementsManager.getInstance().
-                convertToFlex(longServerIds, cf.getId(), loggedInUser).size();
     }
 
     /**
@@ -5280,9 +5159,9 @@ public class SystemHandler extends BaseHandler {
      */
     public int tagLatestSnapshot(User loggedInUser, Integer serverId, String tagName) {
         Server server = lookupServer(loggedInUser, serverId);
-        if (!(server.hasEntitlement(EntitlementManager.PROVISIONING))) {
+        if (!(server.hasEntitlement(EntitlementManager.MANAGEMENT))) {
             throw new FaultException(-2, "provisionError",
-                    "System does not have provisioning entitlement: " + server.getId());
+                    "System cannot be provisioned");
         }
         List<ServerSnapshot> snps = ServerFactory.listSnapshots(loggedInUser.getOrg(),
                 server, null, null);
@@ -5460,5 +5339,74 @@ public class SystemHandler extends BaseHandler {
 
         return action.getId().intValue();
     }
-
+    /**
+     * send a ping to a system using OSA
+     * @param loggedInUser the session key
+     * @param serverId server id
+     * @return 1 on success, exception thrown otherwise.
+     *
+     * @xmlrpc.doc send a ping to a system using OSA
+     * @xmlrpc.param #param("string", "sessionKey")
+     * @xmlrpc.param #param("int", "serverId")
+     * @xmlrpc.returntype #return_int_success()
+     */
+    public int sendOsaPing(User loggedInUser, Integer serverId) {
+        Server server = lookupServer(loggedInUser, serverId);
+        PushClient client = server.getPushClient();
+        client.setLastPingTime(new Date());
+        client.setNextActionTime(null);
+        SystemManager.storeServer(server);
+        return 1;
+    }
+    /**
+     * get details about a ping sent to a system using OSA
+     * @param loggedInUser the session key
+     * @param serverId server id
+     * @return details about a ping sent to a system using OSA
+     *
+     * @xmlrpc.doc get details about a ping sent to a system using OSA
+     * @xmlrpc.param #param("User", "loggedInUser")
+     * @xmlrpc.param #param("int", "serverId")
+     * @xmlrpc.returntype
+     *      #struct("osaPing")
+     *          #prop_desc("String" "state"
+     *          "state of the system (unknown, online, offline)")
+     *          #prop_desc("dateTime.iso8601" "lastMessageTime"
+     *          "time of the last received response
+     *          (1970/01/01 00:00:00 if never received a response)")
+     *          #prop_desc("dateTime.iso8601" "lastPingTime"
+     *          "time of the last sent ping
+     *          (1970/01/01 00:00:00 if no ping is pending")
+     *      #struct_end()
+     */
+    public Map<String, Object> getOsaPing(User loggedInUser, Integer serverId) {
+        Server server = lookupServer(loggedInUser, serverId);
+        Map<String, Object> map = new HashMap<String, Object>();
+        if (server.getPushClient() != null) {
+            if (server.getPushClient().getState().getName() == null) {
+                map.put("state", "unknown");
+            }
+            else {
+                map.put("state", server.getPushClient().getState().getName());
+            }
+            if (server.getPushClient().getLastMessageTime() == null) {
+                map.put("lastMessageTime", new Date(0));
+            }
+            else {
+                map.put("lastMessageTime", server.getPushClient().getLastMessageTime());
+            }
+            if (server.getPushClient().getLastPingTime() == null) {
+                map.put("lastPingTime", new Date(0));
+            }
+            else {
+                map.put("lastPingTime", server.getPushClient().getLastPingTime());
+            }
+        }
+        else {
+            map.put("state", "unknown");
+            map.put("lastMessageTime", new Date(0));
+            map.put("lastPingTime", new Date(0));
+        }
+        return map;
+    }
 }

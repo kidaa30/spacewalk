@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2009--2014 Red Hat, Inc.
+ * Copyright (c) 2009--2015 Red Hat, Inc.
  *
  * This software is licensed to you under the GNU General Public License,
  * version 2 (GPLv2). There is NO WARRANTY for this software, express or
@@ -49,7 +49,6 @@ import com.redhat.rhn.domain.token.ActivationKeyFactory;
 import com.redhat.rhn.domain.user.User;
 import com.redhat.rhn.frontend.dto.PackageListItem;
 import com.redhat.rhn.frontend.dto.ProfileDto;
-import com.redhat.rhn.frontend.dto.ServerPath;
 import com.redhat.rhn.frontend.dto.kickstart.CobblerProfileDto;
 import com.redhat.rhn.frontend.dto.kickstart.KickstartDto;
 import com.redhat.rhn.manager.action.ActionManager;
@@ -454,34 +453,6 @@ public class KickstartScheduleCommand extends BaseSystemOperation {
     }
 
     /**
-     *
-     * @return primary proxy for server
-     */
-    public String getPrimaryProxy() {
-        String proxyServerName = "";
-        DataResult retval = null;
-        if (getTargetServer() != null) {
-            SelectMode mode = ModeFactory.getMode("System_queries",
-                    "proxy_path_for_server");
-            Map<String, Object> params = new HashMap<String, Object>();
-            params.put("sid", getTargetServer().getId().toString());
-            retval = mode.execute(params);
-        }
-
-        // loop through the proxy path and return 1st in chain
-        if (retval != null) {
-            for (Iterator itr = retval.iterator(); itr.hasNext();) {
-                ServerPath sPath = (ServerPath)itr.next();
-                if (sPath.getPosition().toString().equals("1")) {
-                    proxyServerName = sPath.getName();
-                    break;
-                }
-            }
-        }
-        return proxyServerName;
-    }
-
-    /**
      * Get the DataResult list of com.redhat.rhn.frontend.dto.ProfileDto that are
      * compatible with the BaseChannel for the selected KickstartData object.
      *
@@ -573,10 +544,7 @@ public class KickstartScheduleCommand extends BaseSystemOperation {
         // we are scheduling a new one
         if (!cobblerOnly) {
             kickstartSession = this.setupKickstartSession(packageAction);
-            KickstartData data = getKsdata();
-            if (!data.isRawData()) {
-                storeActivationKeyInfo();
-            }
+            storeActivationKeyInfo();
         }
         Action kickstartAction = this.scheduleKickstartAction(packageAction);
         ActionFactory.save(packageAction);
@@ -878,7 +846,6 @@ public class KickstartScheduleCommand extends BaseSystemOperation {
         // Now create ActivationKey
         ActivationKey key = ActivationKeyManager.getInstance().
                 createNewReActivationKey(creator, server, note, session);
-        key.addEntitlement(ServerConstants.getServerGroupTypeProvisioningEntitled());
         key.setDeployConfigs(false);
         key.setUsageLimit(usageLimit);
         if (KickstartVirtualizationType.paraHost().

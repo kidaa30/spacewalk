@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2009--2014 Red Hat, Inc.
+ * Copyright (c) 2009--2015 Red Hat, Inc.
  *
  * This software is licensed to you under the GNU General Public License,
  * version 2 (GPLv2). There is NO WARRANTY for this software, express or
@@ -444,80 +444,6 @@ public class ServerFactory extends HibernateFactory {
     }
 
     /**
-     * This methods queries for servers, in the specified Org, that have the
-     * virtual platform entitlement, and for the count of their registered
-     * guests. A set of HostAndGuestView objects is returned.
-     *
-     * @param org The Org to search in
-     *
-     * @return A set of HostAndGuestView objects representing all the virtual
-     * host and a count of their registered guests.
-     *
-     * @see HostAndGuestCountView
-     */
-    public static List findVirtPlatformHostsByOrg(Org org) {
-        Session session = HibernateFactory.getSession();
-
-        ServerGroupType groupType = ServerConstants
-                .getServerGroupTypeVirtualizationPlatformEntitled();
-
-        List result = session
-                .getNamedQuery("Server.findVirtPlatformHostsByOrg")
-                .setParameter("group_type_id", groupType.getId()).setParameter(
-                        "org_id", org.getId()).list();
-
-        return convertToCountView(result);
-    }
-
-    /**
-     * Queries for servers, in the specified org, that have the virtual host
-     * entitlement and have exceeded their guest limit. A set of
-     * HostAndGuestView objects is returned.
-     *
-     * @param org The org to search in
-     *
-     * @return A set of HostAndGuestView object representing all hosts exceeding
-     * their guest limit.
-     *
-     * @see HostAndGuestCountView
-     */
-    public static List findVirtHostsExceedingGuestLimitByOrg(Org org) {
-        Session session = HibernateFactory.getSession();
-
-        ServerGroupType groupType = ServerConstants
-                .getServerGroupTypeVirtualizationEntitled();
-
-        List result = session.getNamedQuery(
-                "Server.findVirtHostsExceedingGuestLimitByOrg").setParameter(
-                        "group_type_id", groupType.getId()).setParameter("org_id",
-                                org.getId()).list();
-        return convertToCountView(result);
-    }
-
-    /**
-     * transforms a result set of id,name, count to a HostAndGuestCountView
-     * object
-     * @param result a list of Object array of id,name, count
-     * @return list of HostAndGuestCountView objects
-     */
-    private static List convertToCountView(List out) {
-        List ret = new ArrayList(out.size());
-        for (Iterator itr = out.iterator(); itr.hasNext();) {
-            Object[] row = (Object[]) itr.next();
-
-            Number hostId = (Number) row[0];
-            Long theHostId = new Long(hostId.longValue());
-            String theHostName = (String) row[1];
-            int guestCount = ((Number) row[2]).intValue();
-
-            HostAndGuestCountView view = new HostAndGuestCountView(theHostId,
-                    theHostName, guestCount);
-            ret.add(view);
-        }
-        return ret;
-    }
-
-    /**
      * Returns a list of Servers which are compatible with the given server.
      * @param user User owner
      * @param server Server whose profiles we want.
@@ -561,24 +487,6 @@ public class ServerFactory extends HibernateFactory {
         params.put("sid", server.getId());
 
         return m.execute(params);
-    }
-
-    /**
-     * List systems that are not in a ServerGroup The query would (hopefully)
-     * return Server objects, but due to the parent child relationship of Server
-     * to SpacewalkServer and ProxyServer, hibernate won't properly return all
-     * the Servers
-     *
-     * @param user the user, who's accessible servers will be returned.
-     * @return A list of servers
-     */
-    public static List<Server> listUngroupedSystems(User user) {
-        Map<String, Object> params = new HashMap<String, Object>();
-        params.put("userId", user.getId());
-        params.put("orgId", user.getOrg().getId());
-        List<Server> servers = singleton.listObjectsByNamedQuery(
-                "Server.findUngrouped", params);
-        return servers;
     }
 
     /**

@@ -1,5 +1,5 @@
 --
--- Copyright (c) 2008 Red Hat, Inc.
+-- Copyright (c) 2008--2015 Red Hat, Inc.
 --
 -- This software is licensed to you under the GNU General Public License,
 -- version 2 (GPLv2). There is NO WARRANTY for this software, express or
@@ -36,10 +36,3 @@ is
 end rhn_cache;
 /
 show errors
-
---
---
--- Revision 1.1  2004/07/02 19:14:32  pjones
--- 125937 -- tools to manipulate rhnUserServerPerms when appropriate.
---
-

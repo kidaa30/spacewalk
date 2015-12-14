@@ -4,7 +4,7 @@ Name: spacewalk-web
 Summary: Spacewalk Web site - Perl modules
 Group: Applications/Internet
 License: GPLv2
-Version: 2.4.1
+Version: 2.5.6
 Release: 1%{?dist}
 URL:          https://fedorahosted.org/spacewalk/
 Source0:      https://fedorahosted.org/releases/s/p/spacewalk/%{name}-%{version}.tar.gz
@@ -128,8 +128,6 @@ rm -rf $RPM_BUILD_ROOT
 %files -n spacewalk-base
 %dir %{perl_vendorlib}/RHN
 %{perl_vendorlib}/RHN.pm
-%{perl_vendorlib}/RHN/Cert.pm
-%{perl_vendorlib}/RHN/SatelliteCert.pm
 
 %files -n spacewalk-base-minimal
 %dir %{perl_vendorlib}/RHN
@@ -157,6 +155,38 @@ rm -rf $RPM_BUILD_ROOT
 %doc LICENSE
 
 %changelog
+* Wed Dec 09 2015 Jan Dobes 2.5.6-1
+- Revert "reintroduce call_procedure function"
+- Revert "reintroduce call_function function"
+- moving smtp_server parameter to java
+- moving chat_enabled parameter to java
+- moving actions_display_limit parameter to java
+- moving base_domain and base_port parameters to java
+
+* Wed Nov 25 2015 Jan Dobes 2.5.5-1
+- reintroduce call_function function
+
+* Wed Nov 25 2015 Jan Dobes 2.5.4-1
+- reintroduce call_procedure function
+
+* Tue Nov 24 2015 Jan Dobes 2.5.3-1
+- spacewalk-web.spec: remove leftovers
+- rhn-satellite-activate: manual references removed
+- perl modules: drop unused Cert.pm
+- perl modules: drop unused SatelliteCert.pm
+
+* Wed Nov 04 2015 Jan Dobes 2.5.2-1
+- removing unused code in RHN::DB package
+
+* Tue Sep 29 2015 Jan Dobes 2.5.1-1
+- Bumping web.version to 2.5.
+- Bumping package versions for 2.5.
+
+* Fri Aug 14 2015 Grant Gainey 2.4.2-1
+- 1253793 - Fixing IE8 display issues  * Add respond.js/html5-shim for IE8  *
+  Block editarea.js, which breaks respond.js under IE8, from    executing under
+  IE8
+
 * Fri Mar 27 2015 Grant Gainey 2.4.1-1
 - Update web.version to 2.4
 - Bumping package versions for 2.4.

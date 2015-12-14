@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2009--2014 Red Hat, Inc.
+ * Copyright (c) 2009--2015 Red Hat, Inc.
  *
  * This software is licensed to you under the GNU General Public License,
  * version 2 (GPLv2). There is NO WARRANTY for this software, express or
@@ -14,7 +14,6 @@
  */
 package com.redhat.rhn.manager.channel.test;
 
-import com.redhat.rhn.common.conf.Config;
 import com.redhat.rhn.common.conf.ConfigDefaults;
 import com.redhat.rhn.common.db.datasource.DataResult;
 import com.redhat.rhn.common.hibernate.HibernateFactory;
@@ -25,7 +24,6 @@ import com.redhat.rhn.domain.channel.DistChannelMap;
 import com.redhat.rhn.domain.channel.ProductName;
 import com.redhat.rhn.domain.channel.ReleaseChannelMap;
 import com.redhat.rhn.domain.channel.test.ChannelFactoryTest;
-import com.redhat.rhn.domain.common.CommonConstants;
 import com.redhat.rhn.domain.errata.Errata;
 import com.redhat.rhn.domain.errata.ErrataFactory;
 import com.redhat.rhn.domain.errata.test.ErrataFactoryTest;
@@ -49,11 +47,9 @@ import com.redhat.rhn.frontend.dto.PackageDto;
 import com.redhat.rhn.frontend.dto.PackageOverview;
 import com.redhat.rhn.frontend.dto.SystemsPerChannelDto;
 import com.redhat.rhn.frontend.xmlrpc.NoSuchChannelException;
-import com.redhat.rhn.manager.channel.ChannelEntitlementCounter;
 import com.redhat.rhn.manager.channel.ChannelManager;
 import com.redhat.rhn.manager.channel.EusReleaseComparator;
 import com.redhat.rhn.manager.channel.MultipleChannelsWithPackageException;
-import com.redhat.rhn.manager.entitlement.EntitlementManager;
 import com.redhat.rhn.manager.errata.ErrataManager;
 import com.redhat.rhn.manager.rhnpackage.test.PackageManagerTest;
 import com.redhat.rhn.manager.rhnset.RhnSetDecl;
@@ -127,39 +123,6 @@ public class ChannelManagerTest extends BaseTestCaseWithUser {
 
         //make sure we got a list out
         assertNotNull(channels);
-
-    }
-
-    public void testEntitlements() throws Exception {
-        ChannelFactoryTest.createTestChannel(user);
-
-        OrgFactory.save(user.getOrg());
-
-        DataResult<ChannelOverview> dr =
-                ChannelManager.entitlements(user.getOrg().getId(), null);
-        assertNotEmpty(dr);
-    }
-
-    public void testGetEntitlement() throws Exception {
-        Channel channel = ChannelFactoryTest.createTestChannel(user);
-
-        OrgFactory.save(user.getOrg());
-
-        ChannelOverview co = ChannelManager.getEntitlement(user.getOrg().getId(),
-                                                   channel.getChannelFamily().getId());
-        assertNotNull(co);
-
-    }
-
-    public void testGetEntitlementAllOrgs() throws Exception {
-        Channel channel = ChannelFactoryTest.createTestChannel(user);
-
-        OrgFactory.save(user.getOrg());
-
-        List<ChannelOverview> co = ChannelManager.getEntitlementForAllOrgs(
-                channel.getChannelFamily().getId());
-        assertNotNull(co);
-        assertTrue(co.size() > 0);
 
     }
 
@@ -307,7 +270,7 @@ public class ChannelManagerTest extends BaseTestCaseWithUser {
 
         e = (Errata) TestUtils.saveAndReload(e);
 
-        List<ErrataOverview> errata = ChannelManager.listErrata(c, null, null, user);
+        List<ErrataOverview> errata = ChannelManager.listErrata(c, null, null, false, user);
         boolean found = false;
         for (ErrataOverview eo : errata) {
             if (eo.getId().equals(e.getId())) {
@@ -320,7 +283,7 @@ public class ChannelManagerTest extends BaseTestCaseWithUser {
         found = false;
         Date date = new Date();
         errata = ChannelManager.listErrata(c, new Date(date.getTime() - 100000),
-                null, user);
+                null, false, user);
         for (ErrataOverview eo : errata) {
             if (eo.getId().equals(e.getId())) {
                 found = true;
@@ -330,7 +293,7 @@ public class ChannelManagerTest extends BaseTestCaseWithUser {
 
         found = false;
         errata = ChannelManager.listErrata(c, new Date(date.getTime() - 100000),
-                                    new Date(date.getTime() + 5000000), user);
+                                    new Date(date.getTime() + 5000000), false, user);
         for (ErrataOverview eo : errata) {
             if (eo.getId().equals(e.getId())) {
                 found = true;
@@ -547,36 +510,6 @@ public class ChannelManagerTest extends BaseTestCaseWithUser {
         assertEquals(-1, comparator.compare("5.0.9.0", "5.0.10.0"));
     }
 
-    public void testIsChannelFree() throws Exception {
-
-        Server s = ServerTestUtils.createVirtHostWithGuests(user, 1);
-        Server guest = (s.getGuests().iterator().next()).getGuestSystem();
-        Channel b1 = ChannelTestUtils.createTestChannel(user);
-        Channel b2 = ChannelTestUtils.createTestChannel(user);
-        assertFalse(ChannelManager.isChannelFreeForSubscription(s.getId(), b1));
-        assertFalse(ChannelManager.isChannelFreeForSubscription(s.getId(), b2));
-
-        b1.getChannelFamily().addVirtSubscriptionLevel(
-                CommonConstants.getVirtSubscriptionLevelFree());
-        assertTrue(ChannelManager.isChannelFreeForSubscription(guest.getId(), b1));
-
-        b2.getChannelFamily().addVirtSubscriptionLevel(
-                CommonConstants.getVirtSubscriptionLevelPlatformFree());
-
-        // Check virt-plat
-        UserTestUtils.addVirtualizationPlatform(user.getOrg());
-        SystemManager.removeServerEntitlement(s.getId(),
-                EntitlementManager.VIRTUALIZATION);
-        SystemManager.entitleServer(s, EntitlementManager.VIRTUALIZATION_PLATFORM);
-
-        assertTrue(ChannelManager.isChannelFreeForSubscription(guest.getId(), b2));
-
-        // Check guest without host
-        guest.getVirtualInstance().setHostSystem(null);
-        assertFalse(ChannelManager.isChannelFreeForSubscription(guest.getId(), b1));
-
-    }
-
     public void testGetToolsChannel() throws Exception {
         Channel base = ChannelTestUtils.createTestChannel(user);
         Channel tools = ChannelTestUtils.createChildChannel(user, base);
@@ -617,8 +550,6 @@ public class ChannelManagerTest extends BaseTestCaseWithUser {
         Server s = ServerTestUtils.createTestSystem(user);
         Channel[] chans = ChannelTestUtils.
             setupBaseChannelForVirtualization(s.getCreator(), s.getBaseChannel());
-        Config.get().setString(ChannelEntitlementCounter.class.getName(),
-                TestChannelCounter.class.getName());
 
         s.addChannel(chans[0]);
         s.addChannel(chans[1]);
@@ -626,10 +557,6 @@ public class ChannelManagerTest extends BaseTestCaseWithUser {
 
         assertNotNull(ChannelManager.subscribeToChildChannelWithPackageName(user,
                 s, ChannelManager.TOOLS_CHANNEL_PACKAGE_NAME));
-
-        Config.get().setString(ChannelEntitlementCounter.class.getName(),
-                ChannelEntitlementCounter.class.getName());
-
     }
 
     public void testSubscribeToChildChannelWithPackageNameMultipleResults()
@@ -642,8 +569,6 @@ public class ChannelManagerTest extends BaseTestCaseWithUser {
         // Repeat to ensure there's multiple child channels created:
         ChannelTestUtils.
             setupBaseChannelForVirtualization(s.getCreator(), s.getBaseChannel());
-        Config.get().setString(ChannelEntitlementCounter.class.getName(),
-                TestChannelCounter.class.getName());
 
         int channelCountBefore = s.getChannels().size();
         try {
@@ -655,10 +580,6 @@ public class ChannelManagerTest extends BaseTestCaseWithUser {
             // expected
         }
         assertEquals(channelCountBefore, s.getChannels().size());
-
-        Config.get().setString(ChannelEntitlementCounter.class.getName(),
-                ChannelEntitlementCounter.class.getName());
-
     }
 
     public void testSubscribeToChildChannelWithPackageNameMultipleResultsAlreadySubbed()
@@ -671,8 +592,6 @@ public class ChannelManagerTest extends BaseTestCaseWithUser {
         // Repeat to ensure there's multiple child channels created:
         chans = ChannelTestUtils.
         setupBaseChannelForVirtualization(s.getCreator(), s.getBaseChannel());
-        Config.get().setString(ChannelEntitlementCounter.class.getName(),
-                TestChannelCounter.class.getName());
 
         // Subscribe to one set of the child channels but not the other, this should *not*
         // generate the multiple channels with package exception:
@@ -685,9 +604,6 @@ public class ChannelManagerTest extends BaseTestCaseWithUser {
                     s, ChannelManager.TOOLS_CHANNEL_PACKAGE_NAME));
         assertEquals(channelCountBefore, s.getChannels().size());
 
-        Config.get().setString(ChannelEntitlementCounter.class.getName(),
-                ChannelEntitlementCounter.class.getName());
-
     }
 
     public void testsubscribeToChildChannelByOSProduct() throws Exception {
@@ -695,14 +611,9 @@ public class ChannelManagerTest extends BaseTestCaseWithUser {
         Server s = ServerTestUtils.createTestSystem(user);
         ChannelTestUtils.setupBaseChannelForVirtualization(s.getCreator(),
                 s.getBaseChannel());
-        Config.get().setString(ChannelEntitlementCounter.class.getName(),
-                TestChannelCounter.class.getName());
 
         assertNotNull(ChannelManager.subscribeToChildChannelByOSProduct(user,
                 s, ChannelManager.VT_OS_PRODUCT));
-
-        Config.get().setString(ChannelEntitlementCounter.class.getName(),
-                ChannelEntitlementCounter.class.getName());
 
     }
 
@@ -861,8 +772,8 @@ public class ChannelManagerTest extends BaseTestCaseWithUser {
 
         String release = MAP_RELEASE + TestUtils.randomString();
         ChannelTestUtils.addDistMapToChannel(c, TEST_OS, release);
-        DistChannelMap dcm = ChannelManager.lookupDistChannelMapByPnReleaseArch(TEST_OS,
-               release, c.getChannelArch());
+        DistChannelMap dcm = ChannelManager.lookupDistChannelMapByPnReleaseArch(
+                user.getOrg(), TEST_OS, release, c.getChannelArch());
         assertNotNull(dcm);
         assertEquals(c.getId(), dcm.getChannel().getId());
     }

@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2009--2014 Red Hat, Inc.
+ * Copyright (c) 2009--2015 Red Hat, Inc.
  *
  * This software is licensed to you under the GNU General Public License,
  * version 2 (GPLv2). There is NO WARRANTY for this software, express or
@@ -153,7 +153,9 @@ public abstract class RhnSetAction extends RhnListDispatchAction {
      */
     protected abstract RhnSetDecl getSetDecl();
 
-    protected final String getSetName() { throw new UnsupportedOperationException(); }
+    protected final String getSetName() {
+        throw new UnsupportedOperationException();
+    }
 
     protected abstract DataResult getDataResult(User user,
             ActionForm formIn, HttpServletRequest request);

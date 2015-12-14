@@ -1,5 +1,5 @@
 --
--- Copyright (c) 2010--2012 Red Hat, Inc.
+-- Copyright (c) 2010--2015 Red Hat, Inc.
 --
 -- This software is licensed to you under the GNU General Public License,
 -- version 2 (GPLv2). There is NO WARRANTY for this software, express or
@@ -87,11 +87,6 @@ INSERT INTO rhnTaskoSchedule (id, job_label, bunch_id, active_from, cron_expr)
 INSERT INTO rhnTaskoSchedule (id, job_label, bunch_id, active_from, cron_expr)
     VALUES(sequence_nextval('rhn_tasko_schedule_id_seq'), 'compare-configs-default',
         (SELECT id FROM rhnTaskoBunch WHERE name='compare-configs-bunch'),
-        current_timestamp, '0 0 23 ? * *');
-
-INSERT INTO rhnTaskoSchedule (id, job_label, bunch_id, active_from, cron_expr)
-    VALUES(sequence_nextval('rhn_tasko_schedule_id_seq'), 'satcert-check-default',
-        (SELECT id FROM rhnTaskoBunch WHERE name='satcert-check-bunch'),
         current_timestamp, '0 0 23 ? * *');
 
 INSERT INTO rhnTaskoSchedule (id, job_label, bunch_id, active_from, cron_expr)

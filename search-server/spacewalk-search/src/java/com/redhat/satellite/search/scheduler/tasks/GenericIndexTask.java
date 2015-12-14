@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2008--2013 Red Hat, Inc.
+ * Copyright (c) 2008--2015 Red Hat, Inc.
  *
  * This software is licensed to you under the GNU General Public License,
  * version 2 (GPLv2). There is NO WARRANTY for this software, express or
@@ -25,10 +25,10 @@ import com.redhat.satellite.search.index.builder.DocumentBuilder;
 
 import org.apache.log4j.Logger;
 import org.apache.lucene.document.Document;
-import org.quartz.Job;
 import org.quartz.JobDataMap;
 import org.quartz.JobExecutionContext;
 import org.quartz.JobExecutionException;
+import org.quartz.StatefulJob;
 
 import java.sql.SQLException;
 import java.util.Calendar;
@@ -44,7 +44,7 @@ import java.util.Map;
  * GenericIndexTask
  * @version $Rev$
  */
-public abstract class GenericIndexTask implements Job {
+public abstract class GenericIndexTask implements StatefulJob {
 
     private static Logger log = Logger.getLogger(GenericIndexTask.class);
     private String lang = "en";

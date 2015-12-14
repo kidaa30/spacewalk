@@ -1,5 +1,5 @@
 --
--- Copyright (c) 2010--2012 Red Hat, Inc.
+-- Copyright (c) 2010--2015 Red Hat, Inc.
 --
 -- This software is licensed to you under the GNU General Public License,
 -- version 2 (GPLv2). There is NO WARRANTY for this software, express or
@@ -109,13 +109,6 @@ INSERT INTO rhnTaskoTemplate (id, bunch_id, task_id, ordering, start_if)
              VALUES (sequence_nextval('rhn_tasko_template_id_seq'),
                         (SELECT id FROM rhnTaskoBunch WHERE name='channel-repodata-bunch'),
                         (SELECT id FROM rhnTaskoTask WHERE name='channel-repodata'),
-                        0,
-                        null);
-
-INSERT INTO rhnTaskoTemplate (id, bunch_id, task_id, ordering, start_if)
-             VALUES (sequence_nextval('rhn_tasko_template_id_seq'),
-                        (SELECT id FROM rhnTaskoBunch WHERE name='satcert-check-bunch'),
-                        (SELECT id FROM rhnTaskoTask WHERE name='sat-cert-check'),
                         0,
                         null);
 

@@ -4,7 +4,7 @@
 %endif
 
 Name:		spacewalk-utils
-Version:	2.4.3
+Version:	2.5.3
 Release:	1%{?dist}
 Summary:	Utilities that may be run against a Spacewalk server.
 
@@ -31,7 +31,7 @@ BuildRequires:  spacewalk-backend-tools >= 1.7.24
 %endif
 
 Requires:       bash
-Requires:       cobbler
+Requires:       cobbler20
 Requires:       coreutils
 Requires:       initscripts
 Requires:       iproute
@@ -96,6 +96,76 @@ spacewalk-pylint $RPM_BUILD_ROOT%{rhnroot}
 
 
 %changelog
+* Wed Dec 09 2015 Jan Dobes 2.5.3-1
+- Updated Oracle yum repo URLs and added new repositories for OL6 and OL7.
+
+* Thu Nov 26 2015 Tomas Kasparek <tkasparek@redhat.com> 2.5.2-1
+- make clone-by-date python 2.4 compatible
+
+* Mon Oct 12 2015 Tomas Kasparek <tkasparek@redhat.com> 2.5.1-1
+- 1262348 - disable spacewalk-dump-schema functionality when rhn-upgrade
+  package is found
+- Bumping package versions for 2.5.
+
+* Tue Sep 29 2015 Jan Dobes 2.4.19-1
+- adding Spacewalk 2.4 entries
+- adding F22
+- update spacewalk nightly entries
+- no nightly for all F20 and EL5 server
+
+* Fri Sep 25 2015 Jan Dobes 2.4.18-1
+- have version in name
+- updating gpg
+- Spacewalk 2.3 is not for el5 but is for el7
+- removing Spacewalk 2.1 entries
+
+* Thu Sep 24 2015 Jan Dobes 2.4.17-1
+- Bumping copyright year.
+
+* Mon Sep 21 2015 Jan Dobes 2.4.16-1
+- fixing interactive run
+
+* Tue Aug 18 2015 Tomas Kasparek <tkasparek@redhat.com> 2.4.15-1
+- list[] vs list() - list[] is bad
+
+* Fri Aug 07 2015 Jan Dobes 2.4.14-1
+- use hostname instead of localhost for https connections
+
+* Wed Aug 05 2015 Jan Dobes 2.4.13-1
+- regenerate CA cert too
+
+* Wed Aug 05 2015 Jan Dobes 2.4.12-1
+- trust spacewalk CA certificate
+
+* Thu Jul 30 2015 Tomas Kasparek <tkasparek@redhat.com> 2.4.11-1
+- disable pylint warnings
+- simplify expression
+- remove unused variable
+
+* Tue Jul 28 2015 Tomas Kasparek <tkasparek@redhat.com> 2.4.10-1
+- prevent infinte recursion cycles in spacewalk-clone-by-date
+- remove unused variable
+
+* Fri Jul 24 2015 Tomas Kasparek <tkasparek@redhat.com> 2.4.9-1
+- require cobbler20 - Spacewalk is not working with upstream cobbler anyway
+
+
+* Tue Jul 14 2015 Jiri Dostal <jdostal@redhat.com> 2.4.8-1
+- Bug 1077770 - Added error messages and fixed error codes
+
+* Tue Jul 14 2015 Tomas Kasparek <tkasparek@redhat.com> 2.4.7-1
+- satisfy pylint
+
+* Tue Jul 14 2015 Tomas Kasparek <tkasparek@redhat.com> 2.4.6-1
+- remove Except KeyboardInterrupt from imports
+- don't add newer errata when processing dependencies
+
+* Fri Jun 26 2015 Tomas Kasparek <tkasparek@redhat.com> 2.4.5-1
+- Recommend cobbler20 with all packages requiring cobbler on Fedora 22
+
+* Wed May 27 2015 Tomas Kasparek <tkasparek@redhat.com> 2.4.4-1
+- fix pylint warning on Fedora 22
+
 * Fri Apr 24 2015 Matej Kollar <mkollar@redhat.com> 2.4.3-1
 - remove whitespace from .sgml files
 

@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2009--2012 Red Hat, Inc.
+ * Copyright (c) 2009--2015 Red Hat, Inc.
  *
  * This software is licensed to you under the GNU General Public License,
  * version 2 (GPLv2). There is NO WARRANTY for this software, express or
@@ -124,11 +124,15 @@ public abstract class RhnQueueJob implements RhnJob {
         }
         int maxWorkItems = Config.get().getInt("taskomatic." + queueName +
                 "_max_work_items", defaultItems);
-        if (queue.getQueueSize() < maxWorkItems) {
-            queue.run(this);
+        int queueSize = queue.getQueueSize();
+        if (getLogger().isDebugEnabled()) {
+            getLogger().debug("Queue size (before run): " + queueSize);
+        }
+        if (queueSize < maxWorkItems) {
+            queue.run();
         }
         else {
-            getLogger().debug("Maximum number of workers already put ... skipping.");
+            getLogger().warn("Maximum number of workers already put ... skipping.");
         }
     }
 

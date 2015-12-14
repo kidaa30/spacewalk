@@ -1,5 +1,5 @@
 --
--- Copyright (c) 2008 Red Hat, Inc.
+-- Copyright (c) 2008--2015 Red Hat, Inc.
 --
 -- This software is licensed to you under the GNU General Public License,
 -- version 2 (GPLv2). There is NO WARRANTY for this software, express or
@@ -36,11 +36,3 @@ begin
 end;
 /
 show errors
-
---
--- Revision 1.2  2002/12/19 20:49:52  misa
--- Deleting from rhnServerProfile when the channel goes away
---
--- Revision 1.1  2002/12/19 19:43:51  misa
--- Added a store procedure to correctly delete channels
---

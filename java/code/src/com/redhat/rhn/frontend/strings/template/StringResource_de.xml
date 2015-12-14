@@ -19,12 +19,9 @@ Red Hat login, in combination with an active Red Hat subscription,
 provides you with access to manage systems on @@PRODUCT_NAME@@.
 
   Red Hat login: {2}
-       Password: {3}
          e-mail: {4}
 
-  {5}
-
-Important: Please change your password upon logging in.
+Please proceed to {3} to set your password and enable your account.
 
 Thank you for using @@PRODUCT_NAME@@.
 {6}</source>
@@ -66,12 +63,9 @@ Red Hat login, in combination with an active Red Hat subscription,
 provides you with access to manage systems on @@PRODUCT_NAME@@.
 
   Red Hat login: {0}
-       Password: {1}
          e-mail: {2}
 
-  {3}
-
-Important: Please change your password upon logging in.
+Please proceed to {1} to set your password and enable your account.
 
 Thank you for using @@PRODUCT_NAME@@.
 {4}</source>
@@ -429,136 +423,30 @@ Vielen Dank, dass Sie @@PRODUCT_NAME@@ verwenden.
 {6}
 </target>
       </trans-unit>
-      <trans-unit id="email.satellitecert.graceperiod.subject">
-        <source>@@PRODUCT_NAME@@ Certificate expiration warning</source>
-        <context-group name="ctx">
-          <context context-type="sourcefile">Taskomatic: @@PRODUCT_NAME@@CertificateCheck</context>
-        </context-group>
-        <target>@@PRODUCT_NAME@@ Warnung zum Ablauf des Server-Zertifikats</target>
-      </trans-unit>
-      <trans-unit id="email.satellitecert.graceperiod.body">
-        <source>
-Dear @@PRODUCT_NAME@@ User,
-
-This email is being sent to you to inform you that your @@PRODUCT_NAME@@ Certificate
-has expired on your {0} server. After {1} day(s) the systems
-management services provided by your @@PRODUCT_NAME@@ Server will be restricted for {2} days.
-After that the services will become inaccessible.</source>
-        <context-group name="ctx">
-          <context context-type="sourcefile">Taskomatic: @@PRODUCT_NAME@@CertificateCheck</context>
-          <context context-type="paramnotes">
-          {0} - Hostname of the @@PRODUCT_NAME@@ Whose Cert has Expired: highwind.devel.redhat.com
-          {1} - Days Until satellite certificate expiration: 7
-          </context>
-        </context-group>
-        <target>
-Sehr geehrter @@PRODUCT_NAME@@ Benutzer,
-
-diese E-Mail wurde gesendet, um Sie über den Ablauf Ihres @@PRODUCT_NAME@@ Zertifikats
-auf Ihrem lokalen Satellite {0} zu informieren. Nach Ablauf von {1} Tag(en) werden die für Ihren
-@@PRODUCT_NAME@@ Server verfügbaren System-Management-Dienste für {2} Tage eingeschränkt werden.
-Danach werden die Dienste nicht mehr erreichbar sein..</target>
-      </trans-unit>
-      <trans-unit id="email.satellitecert.expired.subject">
-        <source>@@PRODUCT_NAME@@ Certificate expiration notice</source>
-        <context-group name="ctx">
-          <context context-type="sourcefile">Taskomatic: @@PRODUCT_NAME@@CertificateCheck</context>
-        </context-group>
-        <target>Red Hat Satellite Benachrichtigung über den Ablauf des Zertifikats</target>
-      </trans-unit>
-      <trans-unit id="email.satellitecert.spwbodyend">
-        <source>
-
-
-Thank you for using @@PRODUCT_NAME@@.
---the @@PRODUCT_NAME@@ Team
-</source>
-        <context-group name="ctx">
-          <context context-type="sourcefile">Taskomatic: @@PRODUCT_NAME@@CertificateCheck</context>
-        </context-group>
-        <target>
-
-
-Vielen Dank, dass Sie @@PRODUCT_NAME@@ verwenden.
--- Ihr @@PRODUCT_NAME@@ Team
-</target>
-      </trans-unit>
-      <trans-unit id="email.satellitecert.satbodyend">
-        <source>
-Please visit the following url for steps on how to request or generate a new @@PRODUCT_NAME@@ certificate: https://access.redhat.com/knowledge/tools/satcert
-
-
-Thank you for using @@PRODUCT_NAME@@.
---the @@PRODUCT_NAME@@ Team
-</source>
-        <context-group name="ctx">
-          <context context-type="sourcefile">Taskomatic: @@PRODUCT_NAME@@CertificateCheck</context>
-        </context-group>
-        <target>
-Bitte besuchen Sie die folgende URL für Schritte wie ein neues @@PRODUCT_NAME@@ Zertifikat zu verlangen oder zu erstellen ist: https://access.redhat.com/knowledge/tools/satcert
-
-
-Vielen Dank, dass Sie @@PRODUCT_NAME@@ verwenden.
--- Ihr @@PRODUCT_NAME@@ Team
-</target>
-      </trans-unit>
-      <trans-unit id="email.satellitecert.restricted.body">
-        <source>
-Dear @@PRODUCT_NAME@@ User,
-
-This email is being sent to you to inform you that your @@PRODUCT_NAME@@ Certificate
-has expired on your {0} server. Your Satellite is on day {1} of {2} day restricted period
-and will soon stop functioning.</source>
-        <target>
-Sehr geehrter @@PRODUCT_NAME@@ Benutzer,
-
-diese E-Mail wurde gesendet, um Sie über den Ablauf Ihres @@PRODUCT_NAME@@ Zertifikats
-auf Ihrem lokalen Satellite {0} zu informieren. Ihr Satellite ist auf Tag {1} der {2} Tage eingeschränkten Periode
-und wird in Kürze aufhören zu funktionieren.</target>
-      </trans-unit>
-      <trans-unit id="email.satellitecert.expired.body">
-        <source>
-Dear @@PRODUCT_NAME@@ User,
-
-This email is being sent to you to inform you that your @@PRODUCT_NAME@@ Certificate
-has expired on your {0} server. The system management services will be inaccessible
-until your certificate is renewed.</source>
-        <context-group name="ctx">
-          <context context-type="sourcefile">Taskomatic: @@PRODUCT_NAME@@CertificateCheck</context>
-          <context context-type="paramnotes">{0} - Hostname of the @@PRODUCT_NAME@@ Whose Cert has Expired: highwind.devel.redhat.com </context>
-        </context-group>
-        <target>
-Sehr geehrter @@PRODUCT_NAME@@ Benutzer,
-
-diese E-Mail wurde gesendet, um Sie über den Ablauf Ihres @@PRODUCT_NAME@@ Zertifikats
-auf Ihrem lokalen Satellite {0} zu informieren. Die System-Management-Dienste werden nicht mehr
-erreichbar sein, bis Sie Ihr Zertifikat erneuern.</target>
-      </trans-unit>
       <trans-unit id="email.forgotten.password">
         <source>
 [ This is an automated email sent to {0} at your request. ]
 
-Your @@PRODUCT_NAME@@ password has been reset.  To sign in, go to:
+A request to reset the @@PRODUCT_NAME@@ password for login {2} has been made.
 
-https://{1}/
+To continue the reset process, please proceed to:
 
-And use the following username and password:
+{1}
 
-Username: {2}
-Password: {3}
+If you don't want your password reset, you can ignore this email.
 
-Once you have logged in, you may then change your password.
-
-If you continue to have difficulties logging in, please contact
-your @@PRODUCT_NAME@@ administrator for further assistance.
+If you experience any further difficulties with the reset process,
+please contact your @@PRODUCT_NAME@@ administrator for further assistance.
 
 Thank you for using @@PRODUCT_NAME@@.
         </source>
-        <context-group name="ctx"><context context-type="sourcefile">ForgotCredentials</context><context context-type="paramnotes">
+        <context-group name="ctx">
+            <context context-type="sourcefile">ForgotCredentials</context>
+            <context context-type="paramnotes">
             {0} - Email address
-            {1} - Hostname of the @@PRODUCT_NAME@@</context>
+            {1} - Password-reset link
             {2} - Username
-            {3} - Password
+            </context>
         </context-group>
         <target>
 [ Diese automatisierte E-Mail wurde auf Ihren Wunsch an {0} geschickt. ]
@@ -626,6 +514,27 @@ Falls Sie diese E-Mail nicht angefordert haben, so ignorieren Sie diese Nachrich
 
 Vielen Dank, dass Sie @@PRODUCT_NAME@@ verwenden.
         </target>
+      </trans-unit>
+      <trans-unit id="email.reset.password">
+        <source>
+[ This is an automated email sent to {0}. ]
+
+The @@PRODUCT_NAME@@ password for login {1} has been reset in response to a reset-request
+made at {2}
+
+If you did not initiate this password reset, please IMMEDIATELY contact the @@PRODUCT_NAME@@
+administrator at {2} for further assistance.
+
+Thank you for using @@PRODUCT_NAME@@.
+        </source>
+        <context-group name="ctx">
+          <context context-type="sourcefile">ResetPasswordSubmit</context>
+          <context context-type="paramnotes">
+            {0} - Email address
+            {1} - Associated login
+            {2} - Hostname of the @@PRODUCT_NAME@@
+          </context>
+        </context-group>
       </trans-unit>
     </body>
   </file>

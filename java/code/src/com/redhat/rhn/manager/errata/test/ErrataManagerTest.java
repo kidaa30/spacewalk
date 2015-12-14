@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2009--2014 Red Hat, Inc.
+ * Copyright (c) 2009--2015 Red Hat, Inc.
  *
  * This software is licensed to you under the GNU General Public License,
  * version 2 (GPLv2). There is NO WARRANTY for this software, express or
@@ -500,7 +500,7 @@ public class ErrataManagerTest extends BaseTestCaseWithUser {
         assertTrue("Server 1 Scheduled Erratas contain relevant erratas",
                 server1ScheduledErrata.contains(errata3.getId()));
 
-        assertEquals("Server 1 Scheduled Erratas has 2 erratas (errata2 and errata3)",
+        assertEquals("Server 2 Scheduled Erratas has 2 erratas (errata2 and errata3)",
                 2, server2ScheduledErrata.size());
         assertFalse("Server 2 Scheduled Erratas do not include other server's errata",
                 server2ScheduledErrata.contains(errata1.getId()));
@@ -642,7 +642,7 @@ public class ErrataManagerTest extends BaseTestCaseWithUser {
                 server1ScheduledErrata.contains(yumErrata2.getId()));
 
 
-        assertEquals("Server 2 Scheduled Erratas has 2 erratas (errata2 and errata3)",
+        assertEquals("Server 2 Scheduled Erratas has 2 erratas (errata2 and yumErrata1)",
                 2, server2ScheduledErrata.size());
         assertFalse("Server 2 Scheduled Erratas do not include irrelevant errata",
                 server2ScheduledErrata.contains(errata3.getId()));

@@ -6,7 +6,7 @@
 %{!?fedora: %global sbinpath /sbin}%{?fedora: %global sbinpath %{_sbindir}}
 
 Name:            oracle-xe-selinux
-Version:         10.2.0.39
+Version:         10.2.0.41
 Release:         1%{?dist}
 Summary:         SELinux policy module supporting Oracle XE
 Group:           System Environment/Base
@@ -25,7 +25,7 @@ BuildArch:       noarch
 %if "%{selinux_policyver}" != ""
 Requires:         selinux-policy >= %{selinux_policyver}
 %endif
-Requires(post):   /usr/sbin/semodule, %{sbinpath}/restorecon, %{sbinpath}/ldconfig, /usr/sbin/selinuxenabled
+Requires(post):   /usr/sbin/semodule, %{sbinpath}/restorecon, /sbin/ldconfig, /usr/sbin/selinuxenabled
 Requires(postun): /usr/sbin/semodule, %{sbinpath}/restorecon
 Requires:         /etc/init.d/oracle-xe
 Requires:         oracle-nofcontext-selinux
@@ -138,6 +138,12 @@ fi
 %attr(0755,root,root) %{_sbindir}/%{name}-enable
 
 %changelog
+* Wed Sep 16 2015 Tomas Kasparek <tkasparek@redhat.com> 10.2.0.41-1
+- bz1258563 - selinux fix for fedora 21/22
+
+* Tue Jun 16 2015 Jan Dobes 10.2.0.40-1
+- glibc is still providing /sbin/ldconfig
+
 * Thu Feb 19 2015 Tomas Lestach <tlestach@redhat.com> 10.2.0.39-1
 - allow oracle_sqlplus_t to search through the rhnsd_conf_t directories
 

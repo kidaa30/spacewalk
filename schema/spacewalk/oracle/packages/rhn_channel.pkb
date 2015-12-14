@@ -1,5 +1,5 @@
 --
--- Copyright (c) 2008--2014 Red Hat, Inc.
+-- Copyright (c) 2008--2015 Red Hat, Inc.
 --
 -- This software is licensed to you under the GNU General Public License,
 -- version 2 (GPLv2). There is NO WARRANTY for this software, express or
@@ -48,7 +48,7 @@ IS
            for update;
     end obtain_read_lock;
 
-    PROCEDURE subscribe_server(server_id_in IN NUMBER, channel_id_in NUMBER, immediate_in NUMBER := 1, user_id_in in number := null, recalcfamily_in number := 1)
+    PROCEDURE subscribe_server(server_id_in IN NUMBER, channel_id_in NUMBER, immediate_in NUMBER := 1, user_id_in in number := null)
     IS
         channel_parent_val      rhnChannel.parent_channel%TYPE;
         parent_subscribed       BOOLEAN;
@@ -56,11 +56,7 @@ IS
         server_already_in_chan  BOOLEAN;
         channel_family_id_val   NUMBER;
         server_org_id_val       NUMBER;
-        available_subscriptions NUMBER;
-        available_fve_subs      NUMBER;
-        consenting_user         NUMBER;
         allowed                 number := 0;
-        is_fve                  CHAR(1) := 'N';
     BEGIN
         if user_id_in is not null then
             allowed := rhn_channel.user_role_check(channel_id_in, user_id_in, 'subscribe');
@@ -132,164 +128,25 @@ IS
             obtain_read_lock(channel_family_id_val, server_org_id_val);
         exception
             when no_data_found then
-                rhn_exception.raise_exception('channel_family_no_subscriptions');
+                rhn_exception.raise_exception('channel_subscribe_no_family');
         end;
 
-        available_subscriptions := rhn_channel.available_family_subscriptions(channel_family_id_val, server_org_id_val);
-        available_fve_subs := rhn_channel.available_fve_family_subs(channel_family_id_val, server_org_id_val);
+        insert into rhnServerHistory (id,server_id,summary,details) (
+            select  rhn_event_id_seq.nextval,
+                    server_id_in,
+                    'subscribed to channel ' || SUBSTR(c.label, 0, 106),
+                    c.label
+            from    rhnChannel c
+            where   c.id = channel_id_in
+        );
 
-        IF available_subscriptions IS NULL OR
-            available_subscriptions > 0 or
-            can_server_consume_virt_channl(server_id_in, channel_family_id_val) = 1 OR
-            (available_fve_subs > 0 AND can_server_consume_fve(server_id_in) = 1)
-        THEN
-            if can_server_consume_virt_channl(server_id_in, channel_family_id_val) = 0 AND available_fve_subs > 0 AND can_server_consume_fve(server_id_in) = 1 THEN
-                is_fve := 'Y';
-            END IF;
-            insert into rhnServerHistory (id,server_id,summary,details) (
-                select  rhn_event_id_seq.nextval,
-                        server_id_in,
-                        'subscribed to channel ' || SUBSTR(c.label, 0, 106),
-                        c.label
-                from    rhnChannel c
-                where   c.id = channel_id_in
-            );
+        INSERT INTO rhnServerChannel (server_id, channel_id) VALUES (server_id_in, channel_id_in);
+        queue_server(server_id_in, immediate_in);
 
-            INSERT INTO rhnServerChannel (server_id, channel_id, is_fve) VALUES (server_id_in, channel_id_in, is_fve);
-			IF recalcfamily_in > 0
-			THEN
-                rhn_channel.update_family_counts(channel_family_id_val, server_org_id_val);
-			END IF;
-            queue_server(server_id_in, immediate_in);
-
-            update rhnServer
-               set channels_changed = current_timestamp
-             where id = server_id_in;
-        ELSE
-            rhn_exception.raise_exception('channel_family_no_subscriptions');
-        END IF;
-            
+        update rhnServer
+           set channels_changed = current_timestamp
+         where id = server_id_in;
     END subscribe_server;
-
-
-
-    FUNCTION can_convert_to_fve(server_id_in IN NUMBER, channel_family_id_val IN NUMBER)
-    RETURN NUMBER
-    IS
-        CURSOR fve_convertible_entries IS
-        select 1  from
-            rhnServerFveCapable cap
-          where cap.server_id = server_id_in
-                AND cap.channel_family_id = channel_family_id_val;
-    BEGIN
-        FOR entry IN fve_convertible_entries LOOP
-            return 1;
-        END LOOP;
-        RETURN 0;
-    END can_convert_to_fve;
-
-
-
-    -- Converts server channel_family to use a flex entitlement
-    PROCEDURE convert_to_fve(server_id_in IN NUMBER, channel_family_id_val IN NUMBER)
-    IS
-        available_fve_subs      NUMBER;
-        server_org_id_val       NUMBER;        
-    BEGIN
-
-        --
-        -- Use the org_id of the server only if the org_id of the channel = NULL.
-        -- This is required for subscribing to shared channels.
-        --
-        SELECT org_id
-          INTO server_org_id_val
-          FROM rhnServer
-         WHERE id = server_id_in;
-         
-        begin
-            obtain_read_lock(channel_family_id_val, server_org_id_val);
-        exception
-            when no_data_found then
-                rhn_exception.raise_exception('channel_family_no_subscriptions');
-        end;
-        IF (can_convert_to_fve(server_id_in, channel_family_id_val ) = 0) 
-            THEN
-                rhn_exception.raise_exception('server_cannot_convert_to_flex');
-        END IF;
-
-        available_fve_subs := rhn_channel.available_fve_family_subs(channel_family_id_val, server_org_id_val);
-
-        IF (available_fve_subs > 0)
-        THEN
-        
-            insert into rhnServerHistory (id,server_id,summary,details) (
-                select  rhn_event_id_seq.nextval,
-                        server_id_in,
-                        'converted to flex entitlement' || SUBSTR(cf.label, 0, 99),
-                        cf.label
-                from    rhnChannelFamily cf
-                where   cf.id = channel_family_id_val
-            );
-
-            UPDATE rhnServerChannel sc set sc.is_fve = 'Y' 
-                           where sc.server_id = server_id_in and  
-                                 sc.channel_id in 
-                                    (select cfm.channel_id from rhnChannelFamilyMembers cfm
-                                                where cfm.CHANNEL_FAMILY_ID = channel_family_id_val);
-            
-            rhn_channel.update_family_counts(channel_family_id_val, server_org_id_val);
-        ELSE
-            rhn_exception.raise_exception('not_enough_flex_entitlements');
-        END IF;
-            
-    END convert_to_fve;    
-    
-    function can_server_consume_virt_channl(
-        server_id_in in number,
-        family_id_in in number )
-    return number
-    is
-
-        cursor server_virt_families is
-            select vi.virtual_system_id, cfvsl.channel_family_id
-            from
-                rhnChannelFamilyVirtSubLevel cfvsl,
-                rhnSGTypeVirtSubLevel sgtvsl,
-                rhnVirtualInstance vi
-            where
-                vi.virtual_system_id = server_id_in 
-                and sgtvsl.virt_sub_level_id = cfvsl.virt_sub_level_id
-                and cfvsl.channel_family_id = family_id_in
-                and exists (
-                    select 1
-                    from rhnServerEntitlementView sev
-                    where vi.host_system_id = sev.server_id
-                    and sev.server_group_type_id = sgtvsl.server_group_type_id );
-    begin
-
-        for server_virt_family in server_virt_families loop
-            return 1;
-        end loop;
-
-        return 0;
-
-    end;
-
-    FUNCTION can_server_consume_fve(server_id_in IN NUMBER)
-    RETURN NUMBER
-    IS
-        CURSOR vi_entries IS
-            SELECT 1
-              FROM rhnVirtualInstance vi
-             WHERE vi.virtual_system_id = server_id_in;
-        vi_count NUMBER;
-
-    BEGIN
-        FOR vi_entry IN VI_ENTRIES LOOP
-            return 1;
-        END LOOP;
-        RETURN 0;
-    END;
 
     function guess_server_base(
         server_id_in in number
@@ -413,8 +270,7 @@ IS
         return NULL;
     end base_channel_rel_archid;
 
-    PROCEDURE clear_subscriptions(server_id_in IN NUMBER, deleting_server IN NUMBER := 0,
-                                update_family_countsYN IN NUMBER := 1)
+    PROCEDURE clear_subscriptions(server_id_in IN NUMBER, deleting_server IN NUMBER := 0)
     IS
         cursor server_channels(server_id_in in number) is
                 select  s.org_id, sc.channel_id, cfm.channel_family_id
@@ -430,31 +286,15 @@ IS
     BEGIN
         for channel in server_channels(server_id_in)
         loop
-                unsubscribe_server(server_id_in, channel.channel_id, 1, 1, deleting_server, 0);
-                if update_family_countsYN > 0
-                    and channel.channel_family_id != last_channel_family_id then
-                    -- update family counts only once
-                    -- after all channels with same family has been fetched
-                    if last_channel_family_id != -1 then
-                        update_family_counts(last_channel_family_id, last_channel_org_id);
-                    end if;
-                    last_channel_family_id := channel.channel_family_id;
-                    last_channel_org_id    := channel.org_id;
-                end if;
+                unsubscribe_server(server_id_in, channel.channel_id, 1, 1, deleting_server);
         end loop channel;
-        if update_family_countsYN > 0 and last_channel_family_id != -1 then
-            -- update the last family fetched
-            update_family_counts(last_channel_family_id, last_channel_org_id);
-        end if;
     END clear_subscriptions;
 
     PROCEDURE unsubscribe_server(server_id_in IN NUMBER, channel_id_in NUMBER, immediate_in NUMBER := 1, unsubscribe_children_in number := 0,
-                                 deleting_server IN NUMBER := 0,
-                                 update_family_countsYN IN NUMBER := 1)
+                                 deleting_server IN NUMBER := 0)
     IS
         channel_family_id_val   NUMBER;
         server_org_id_val       NUMBER;
-        available_subscriptions NUMBER; 
         server_already_in_chan  BOOLEAN;
         cursor  channel_family_is_proxy(channel_family_id_in in number) is
                 select  1
@@ -487,8 +327,7 @@ IS
                                                                 channel_id_in => child.id,
                                                                 immediate_in => immediate_in,
                                                                 unsubscribe_children_in => unsubscribe_children_in,
-                        deleting_server => deleting_server,
-                        update_family_countsYN => update_family_countsYN);
+                        deleting_server => deleting_server);
             else
                 rhn_exception.raise_exception('channel_unsubscribe_child_exists');
             end if;
@@ -543,10 +382,7 @@ IS
         SELECT org_id INTO server_org_id_val
           FROM rhnServer
          WHERE id = server_id_in;
-         
-        if update_family_countsYN = 1 then
-            rhn_channel.update_family_counts(channel_family_id_val, server_org_id_val);
-        end if;
+
     END unsubscribe_server;
 
 
@@ -566,204 +402,7 @@ IS
             RETURN NULL;
     END family_for_channel;
 
-    FUNCTION available_family_subscriptions(channel_family_id_in IN NUMBER, org_id_in IN NUMBER)
-    RETURN NUMBER
-    IS
-        cfp channel_family_perm_cursor%ROWTYPE;
-        current_members_val NUMBER;
-        max_members_val     NUMBER;
-        found               NUMBER;
-    BEGIN
-        IF NOT channel_family_perm_cursor%ISOPEN
-        THEN
-            OPEN channel_family_perm_cursor(channel_family_id_in, org_id_in);
-        END IF;
-
-        FETCH channel_family_perm_cursor INTO cfp;
-        
-        WHILE channel_family_perm_cursor%FOUND
-        LOOP
-            found := 1;
-            
-            current_members_val := cfp.current_members;
-            max_members_val := cfp.max_members;
-            
-            FETCH channel_family_perm_cursor INTO cfp;
-        END LOOP;
-
-        IF channel_family_perm_cursor%ISOPEN
-        THEN
-            CLOSE channel_family_perm_cursor;
-        END IF;
-
-        -- not found: either the channel fam doesn't have an entry in cfp, or the org doesn't have access to it.
-        -- either way, there are no available subscriptions
-        
-        IF found IS NULL
-        THEN
-            RETURN 0;
-        END IF;
-
-        -- null max members?  in that case, pass it on; NULL means infinite                     
-        IF max_members_val IS NULL
-        THEN
-            RETURN NULL;
-        END IF;
-
-        -- otherwise, return the delta  
-        RETURN max_members_val - current_members_val;                   
-    END available_family_subscriptions;
-
-    FUNCTION available_fve_family_subs(channel_family_id_in IN NUMBER, org_id_in IN NUMBER)
-    RETURN NUMBER
-    IS
-        cfp channel_family_perm_cursor%ROWTYPE;
-        fve_current_members_val NUMBER;
-        fve_max_members_val     NUMBER;
-        found               NUMBER;
-
-    BEGIN
-        IF NOT channel_family_perm_cursor%ISOPEN THEN
-            OPEN channel_family_perm_cursor(channel_family_id_in, org_id_in);
-        END IF;
-
-        FETCH channel_family_perm_cursor INTO cfp;
-
-        WHILE channel_family_perm_cursor%FOUND LOOP
-            found := 1;
-            fve_current_members_val := cfp.fve_current_members;
-            fve_max_members_val := cfp.fve_max_members;
-            FETCH channel_family_perm_cursor INTO cfp;
-        END LOOP;
-
-        IF channel_family_perm_cursor%ISOPEN THEN
-            CLOSE channel_family_perm_cursor;
-        END IF;
-
-        IF found IS NULL THEN
-            RETURN 0;
-        END IF;
-
-        IF fve_max_members_val IS NULL THEN
-            RETURN NULL;
-        END IF;
-
-        RETURN fve_max_members_val - fve_current_members_val;
-
-    END available_fve_family_subs;
-
-    
-    -- *******************************************************************
-    -- FUNCTION: channel_family_current_members
-    -- Calculates and returns the actual count of systems consuming
-    --   physical channel subscriptions.
-    -- Called by: update_family_counts 
-    --            rhn_entitlements.repoll_virt_guest_entitlements
-    -- *******************************************************************
-    function channel_family_current_members(channel_family_id_in IN NUMBER,
-                                            org_id_in IN NUMBER)
-    return number
-    is
-        current_members_count number := 0;
-    begin
-        select  count(distinct server_id)
-        into    current_members_count
-          from  rhnChannelFamilyServerPhysical cfsp
-         where  cfsp.channel_family_id = channel_family_id_in
-           and  cfsp.customer_id = org_id_in;
-        return current_members_count;
-    end;        
-
-
-    function cfam_curr_fve_members(
-        channel_family_id_in IN NUMBER,
-        org_id_in IN NUMBER)
-    return number
-    is
-        current_members_count number := 0;
-
-    begin
-        select count(distinct sc.server_id)
-          into current_members_count
-          from rhnServerChannel sc,
-               rhnChannelFamilyMembers cfm,
-               rhnServer s
-         where s.org_id = org_id_in
-           and s.id = sc.server_id
-           and cfm.channel_family_id = channel_family_id_in
-           and cfm.channel_id = sc.channel_id
-           and exists (
-                select 1
-                  from rhnChannelFamilyServerFve cfsp
-                 where cfsp.CHANNEL_FAMILY_ID = channel_family_id_in
-                   and cfsp.server_id = s.id
-                );
-
-        return current_members_count;
-    end;
-    PROCEDURE update_family_counts(channel_family_id_in IN NUMBER, 
-                                   org_id_in IN NUMBER)
-    IS
-    BEGIN
-        update rhnPrivateChannelFamily
-           set current_members = ( channel_family_current_members(channel_family_id_in, org_id_in)),
-               fve_current_members = ( cfam_curr_fve_members(channel_family_id_in, org_id_in))
-         where org_id = org_id_in
-           and channel_family_id = channel_family_id_in;
-    END update_family_counts;
-    
-    PROCEDURE update_group_family_counts(group_label_in IN VARCHAR2,
-                                   org_id_in IN NUMBER)
-    IS
-    BEGIN
-        FOR i IN (
-                SELECT DISTINCT CFM.channel_family_id, SG.org_id
-                 FROM rhnChannelFamilyMembers CFM
-                 JOIN rhnServerChannel SC
-                   ON SC.channel_id = CFM.channel_id
-                 JOIN rhnServerGroupMembers SGM
-                   ON SC.server_id = SGM.server_id
-                 JOIN rhnServerGroup SG
-                   ON SGM.server_group_id = SG.id
-                 JOIN rhnServerGroupType SGT
-                   ON SG.group_type = SGT.id
-                WHERE SGT.label = group_label_in
-                  AND SG.org_id = org_id_in
-                  AND SGT.is_base = 'Y'
-        ) LOOP
-            rhn_channel.update_family_counts(i.channel_family_id, i.org_id);
-        END LOOP;
-    END update_group_family_counts;
-
-    FUNCTION available_chan_subscriptions(channel_id_in IN NUMBER, 
-                                          org_id_in IN NUMBER)
-    RETURN NUMBER
-    IS
-            channel_family_id_val NUMBER;
-    BEGIN
-        SELECT channel_family_id INTO channel_family_id_val
-            FROM rhnChannelFamilyMembers
-            WHERE channel_id = channel_id_in;
-         
-            RETURN rhn_channel.available_family_subscriptions(
-                           channel_family_id_val, org_id_in);
-    END available_chan_subscriptions;
-
-	FUNCTION available_fve_chan_subs(channel_id_in IN NUMBER,
-                                          org_id_in IN NUMBER)
-    RETURN NUMBER
-    IS
-        channel_family_id_val NUMBER;
-
-    BEGIN
-        SELECT channel_family_id INTO channel_family_id_val
-          FROM rhnChannelFamilyMembers
-         WHERE channel_id = channel_id_in;
-
-        RETURN rhn_channel.available_fve_family_subs( channel_family_id_val, org_id_in);
-    END available_fve_chan_subs;
-
-    procedure unsubscribe_server_from_family(server_id_in in number, 
+    procedure unsubscribe_server_from_family(server_id_in in number,
                                              channel_family_id_in in number)
     is
     begin
@@ -816,9 +455,8 @@ IS
                rhnOrgChannelFamilyPermissions CFP
          where cfp.org_id = org_id_in
            and CFM.channel_family_id = CFP.channel_family_id
-           and CFM.channel_id = channel_id_in
-           and (CFP.max_members > 0 or CFP.max_members is null or CFP.fve_max_members > 0 or CFP.fve_max_members is null or CFP.org_id = 1);
-           
+           and CFM.channel_id = channel_id_in;
+
         return 1;
         exception
             when no_data_found
@@ -828,8 +466,8 @@ IS
     
     -- check if a user has a given role, or if such a role is inferrable
     -- returns NULL if OK, error message otherwise
-    function user_role_check_debug(channel_id_in in number, 
-                                   user_id_in in number, 
+    function user_role_check_debug(channel_id_in in number,
+                                   user_id_in in number,
                                    role_in in varchar2)
     return varchar2
     is
@@ -847,18 +485,18 @@ IS
            NVL(rhn_channel.get_org_id(channel_id_in), -1) <> org_id then
                return 'channel_not_owned';
         end if;
-        
-        if role_in = 'subscribe' and 
+
+        if role_in = 'subscribe' and
            rhn_channel.get_org_access(channel_id_in, org_id) = 0 then
                 return 'channel_not_available';
         end if;
-        
+
         -- channel admins have all roles
         if rhn_user.check_role_implied(user_id_in, 'channel_admin') = 1 then
             return NULL;
         end if;
 
-        -- the subscribe permission is inferred 
+        -- the subscribe permission is inferred
         -- UNLESS the not_globally_subscribable flag is set
         if role_in = 'subscribe'
         then
@@ -868,15 +506,15 @@ IS
                     return NULL;
             end if;
         end if;
-        
-        -- all other roles (manage right now) are explicitly granted    
+
+        -- all other roles (manage right now) are explicitly granted
         if rhn_channel.direct_user_role_check(channel_id_in,
                                               user_id_in, role_in) = 1 then
             return NULL;
         end if;
         return 'direct_permission';
     end;
-    
+
     -- same as above, but with 1/0 output; useful in views, etc
     function user_role_check(channel_id_in in number, user_id_in in number, role_in in varchar2)
     return number
@@ -1058,48 +696,6 @@ IS
 
     end channel_priority;
 
-    -- right now this only does the accounting changes; the cascade
-    -- actually does the rhnServerChannel delete.
-    procedure delete_server_channels(server_id_in in number)
-    is
-    begin
-        update  rhnPrivateChannelFamily
-        set     current_members = current_members -1
-        where   org_id in (
-                        select  org_id
-                        from    rhnServer
-                        where   id = server_id_in
-                )
-                and channel_family_id in (
-                        select  rcfm.channel_family_id
-                        from    rhnChannelFamilyMembers rcfm,
-                                rhnServerChannel rsc
-                        where   rsc.server_id = server_id_in
-                                and rsc.channel_id = rcfm.channel_id
-                and not exists (
-                    select 1
-                    from
-                        rhnChannelFamilyVirtSubLevel cfvsl,
-                        rhnSGTypeVirtSubLevel sgtvsl,
-                        rhnServerEntitlementView sev,
-                        rhnVirtualInstance vi
-                    where
-                        -- system is a virtual instance
-                        vi.virtual_system_id = server_id_in
-                        and vi.host_system_id = sev.server_id
-                        -- system's host has a virt ent
-                        and sev.label in ('virtualization_host',
-                                          'virtualization_host_platform')
-                        and sev.server_group_type_id = 
-                            sgtvsl.server_group_type_id
-                        -- the host's virt ent grants a cf virt sub level
-                        and sgtvsl.virt_sub_level_id = cfvsl.virt_sub_level_id
-                        -- the cf is in that virt sub level
-                        and cfvsl.channel_family_id = rcfm.channel_family_id
-                    )
-                );
-    end;
-
     -- this could certainly be optimized to do updates if needs be
     procedure refresh_newest_package(channel_id_in in number,
                                      caller_in in varchar2 := '(unknown)',
@@ -1216,8 +812,7 @@ IS
                  where sc.channel_id = channel_id_in
                  order by id asc
       ) loop
-         rhn_server.update_needed_cache(server.id);
-         commit;
+         queue_server(server.id, 0); -- NOT IMMEDIATELY
       end loop;
    end update_needed_cache;
 

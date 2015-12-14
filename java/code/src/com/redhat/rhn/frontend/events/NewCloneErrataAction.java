@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2009--2014 Red Hat, Inc.
+ * Copyright (c) 2009--2015 Red Hat, Inc.
  *
  * This software is licensed to you under the GNU General Public License,
  * version 2 (GPLv2). There is NO WARRANTY for this software, express or
@@ -14,13 +14,14 @@
  */
 package com.redhat.rhn.frontend.events;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import com.redhat.rhn.common.messaging.EventMessage;
+import com.redhat.rhn.domain.channel.Channel;
 import com.redhat.rhn.domain.errata.Errata;
 import com.redhat.rhn.domain.errata.ErrataFactory;
 import com.redhat.rhn.manager.errata.ErrataManager;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * NewCloneErrataAction
@@ -37,9 +38,13 @@ extends AbstractDatabaseAction {
         NewCloneErrataEvent msg = (NewCloneErrataEvent) msgIn;
         Long eid = msg.getErrata();
         List<Errata> errata = new ArrayList<Errata>();
-        errata.add(ErrataFactory.lookupById(eid));
-        ErrataManager.cloneErrataApi(msg.getChan(), errata,
+        Errata erratum = ErrataFactory.lookupById(eid);
+        Channel channel = msg.getChan();
+        if (channel != null && erratum != null) {
+            errata.add(erratum);
+            ErrataManager.cloneErrataApi(msg.getChan(), errata,
                 msg.getUser(), msg.isInheritPackages());
+        }
         msg.deregister();
     }
 }

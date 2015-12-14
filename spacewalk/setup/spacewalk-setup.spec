@@ -1,7 +1,7 @@
 %{!?fedora: %global sbinpath /sbin}%{?fedora: %global sbinpath %{_sbindir}}
 
 Name:           spacewalk-setup
-Version:        2.4.0
+Version:        2.5.3
 Release:        1%{?dist}
 Summary:        Initial setup tools for Red Hat Spacewalk
 
@@ -26,7 +26,7 @@ Requires:       spacewalk-admin
 Requires:       spacewalk-certs-tools
 Requires:       perl-Satcon
 Requires:       spacewalk-backend-tools
-Requires:       cobbler >= 2.0.0
+Requires:       cobbler20
 Requires:       PyYAML
 Requires:       /usr/bin/gpg
 Requires:       spacewalk-setup-jabberd
@@ -112,6 +112,42 @@ rm -rf %{buildroot}
 %doc LICENSE
 
 %changelog
+* Mon Dec 07 2015 Jan Dobes 2.5.3-1
+- removing create first org code from installer
+
+* Tue Nov 24 2015 Jan Dobes 2.5.2-1
+- Use the same name for the first org as before
+- remove trailing whitespaces
+- Remove unused Cert class from spacewalk-setup
+- Remove unused load_satellite_certificate function and satellite-cert-file
+  parameter
+- Remove certificate handling from setup
+- rhn-satellite-activate: dropped
+
+* Tue Oct 13 2015 Tomas Kasparek <tkasparek@redhat.com> 2.5.1-1
+- use --upgrade option for sw-dump-schema during migrations
+- Bumping package versions for 2.5.
+
+* Fri Aug 07 2015 Tomas Kasparek <tkasparek@redhat.com> 2.4.6-1
+- Modified setup string to make it clearer that Oracle EZconnect requires the
+  Global Database Name, not the SID. The two values are the same for XE.
+
+* Wed Aug 05 2015 Jan Dobes 2.4.5-1
+- trust spacewalk CA certificate
+
+* Fri Jul 24 2015 Tomas Kasparek <tkasparek@redhat.com> 2.4.4-1
+- require cobbler20 - Spacewalk is not working with upstream cobbler anyway
+
+* Fri Jun 26 2015 Tomas Kasparek <tkasparek@redhat.com> 2.4.3-1
+- Recommend cobbler20 with all packages requiring cobbler on Fedora 22
+
+* Wed Jun 03 2015 Tomas Kasparek <tkasparek@redhat.com> 2.4.2-1
+- use ls -Z instead of ls --scontext
+
+* Mon May 25 2015 Tomas Lestach <tlestach@redhat.com> 2.4.1-1
+- spacewalk-setup spec: add spacewalk-base-minimal as an explicit dependency
+- Bumping package versions for 2.4.
+
 * Thu Mar 19 2015 Grant Gainey 2.3.14-1
 - Updating copyright info for 2015
 

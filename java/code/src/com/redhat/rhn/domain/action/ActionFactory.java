@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2009--2014 Red Hat, Inc.
+ * Copyright (c) 2009--2015 Red Hat, Inc.
  *
  * This software is licensed to you under the GNU General Public License,
  * version 2 (GPLv2). There is NO WARRANTY for this software, express or
@@ -704,6 +704,7 @@ public class ActionFactory extends HibernateFactory {
         .setParameter("tries", tries)
         .setParameter("failed", ActionFactory.STATUS_FAILED)
         .setParameter("queued", ActionFactory.STATUS_QUEUED).executeUpdate();
+        removeInvalidResults(action);
     }
 
     /**
@@ -716,6 +717,23 @@ public class ActionFactory extends HibernateFactory {
         .setParameter("action", action)
         .setParameter("tries", tries)
         .setParameter("queued", ActionFactory.STATUS_QUEUED).executeUpdate();
+        removeInvalidResults(action);
+    }
+
+    /**
+     * Reschedule Server Action associated with an action and system
+     * @param action the action who's server actions you are rescheduling
+     * @param tries the number of tries to set (should be set to 5)
+     * @param server system id of action we want reschedule
+     */
+    public static void rescheduleSingleServerAction(Action action, Long tries,
+            Long server) {
+        HibernateFactory.getSession().getNamedQuery("Action.rescheduleSingleServerAction")
+        .setParameter("action", action)
+        .setParameter("tries", tries)
+        .setParameter("queued", ActionFactory.STATUS_QUEUED)
+        .setParameter("server", server).executeUpdate();
+        removeInvalidResults(action);
     }
 
     /**
@@ -727,6 +745,19 @@ public class ActionFactory extends HibernateFactory {
         params.put("id", aid);
         return (ServerHistoryEvent) singleton.lookupObjectByNamedQuery(
                 "ServerHistory.lookupById", params);
+    }
+
+    /**
+     * Removes results of queued action.
+     * @param action results of which action to remove
+     */
+    public static void removeInvalidResults(Action action) {
+        if (action.getActionType().equals(TYPE_SCRIPT_RUN)) {
+            HibernateFactory.getSession().getNamedQuery("ScriptResult.removeInvalidResults")
+            .setParameter("action", action)
+            .setParameter("queued", ActionFactory.STATUS_QUEUED)
+            .executeUpdate();
+        }
     }
 
 

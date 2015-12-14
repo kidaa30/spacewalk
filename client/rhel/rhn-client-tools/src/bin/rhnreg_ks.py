@@ -11,7 +11,7 @@
 #
 #  The contact info is in the form or a "key: value" one per line.
 #  valid keys are:
-#       reg_num, title, first_name, last_name, company,
+#       title, first_name, last_name, company,
 #       position, address1, address2, city, state, zip,
 #       country, phone, fax, contact_email, contact_mail,
 #       contact_phone, contact_fax, contact_special,
@@ -130,13 +130,8 @@ class RegisterKsCli(rhncli.RhnCli):
             other['channel'] = channels['default_channel']
 
         try:
-            if self.options.activationkey:
-                systemId = rhnreg.registerSystem(token = self.options.activationkey,
-                                                 profileName = profilename,
-                                                 other = other)
-            else:
-                systemId = rhnreg.registerSystem(self.options.username,
-                    self.options.password, profilename, other = other)
+            systemId = rhnreg.registerSystem(self.options.username,
+                self.options.password, profilename, self.options.activationkey, other)
         except (up2dateErrors.AuthenticationTicketError,
                 up2dateErrors.RhnUuidUniquenessError,
                 up2dateErrors.CommunicationError,

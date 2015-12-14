@@ -1,6 +1,6 @@
 #
 # RHN Registration Client
-# Copyright (c) 2000--2012 Red Hat, Inc.
+# Copyright (c) 2000--2015 Red Hat, Inc.
 #
 # Authors:
 #     Adrian Likins <alikins@redhat.com>
@@ -301,7 +301,7 @@ class RegistrationResult:
         return len(self._channels) > 0 and len(self._systemSlots) > 0
 
     def _getFailedSlotDescription(self, slot):
-        if slot in ['virtualization_host', 'virtualization_host_platform']:
+        if slot == 'virtualization_host':
             return rhnreg_constants.VIRT + " " + rhnreg_constants.VIRT_FAILED
         else:
             return self._getSlotDescription(slot)
@@ -309,22 +309,14 @@ class RegistrationResult:
     def _getSlotDescription(self, slot):
         if slot == 'enterprise_entitled':
             return rhnreg_constants.MANAGEMENT
-        elif slot == 'sw_mgr_entitled':
-            return rhnreg_constants.UPDATES
-        elif slot == 'provisioning_entitled':
-            return rhnreg_constants.PROVISIONING
-        elif slot == 'monitoring_entitled':
-            return rhnreg_constants.MONITORING
         elif slot == 'virtualization_host':
             return rhnreg_constants.VIRT
-        elif slot == 'virtualization_host_platform':
-            return rhnreg_constants.VIRT_PLATFORM
         else:
             return slot
 
 
 def registerSystem(username = None, password = None,
-                   profileName = None, packages = None,
+                   profileName = None,
                    token = None, other = None):
     """Wrapper for the old xmlrpc to register a system. Activates subscriptions
     if a reg num is given.
@@ -348,10 +340,7 @@ def registerSystem(username = None, password = None,
         auth_dict["smbios"] = _encode_characters(hardware.get_smbios())
 
     s = rhnserver.RhnServer()
-    if packages == None:
-        ret = s.registration.new_system(auth_dict)
-    else:
-        ret = s.registration.new_system(auth_dict, packages)
+    ret = s.registration.new_system(auth_dict)
 
     return ret
 
